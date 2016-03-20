@@ -83,7 +83,10 @@ public class MainActivity extends AppCompatActivity
                     public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
                         MainActivity.this.add(input.toString());
                     }
-                }).show();
+                })
+                .canceledOnTouchOutside(false)
+                .negativeText(android.R.string.cancel)
+                .show();
     }
 
     private void add(String input) {
