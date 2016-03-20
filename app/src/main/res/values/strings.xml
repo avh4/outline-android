@@ -5,4 +5,6 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="dialog_item_actions_title">Item actions</string>
+    <string name="action_item_delete">Delete</string>
 </resources>

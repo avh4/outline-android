@@ -13,6 +13,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import net.avh4.android.PVectorAdapter;
@@ -53,6 +54,26 @@ public class MainActivity extends AppCompatActivity
         assert listView != null;
         adapter = new PVectorAdapter<>(this, R.layout.list_item_outline, android.R.id.text1, data);
         listView.setAdapter(adapter);
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                showItemActionDialog(position);
+                return true;
+            }
+        });
+    }
+
+    private void showItemActionDialog(final int position) {
+        new MaterialDialog.Builder(MainActivity.this)
+                .title(R.string.dialog_item_actions_title)
+                .items(getString(R.string.action_item_delete))
+                .itemsCallback(new MaterialDialog.ListCallback() {
+                    @Override
+                    public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
+                        delete(position);
+                    }
+                })
+                .show();
     }
 
     private void showAddDialog() {
@@ -68,6 +89,11 @@ public class MainActivity extends AppCompatActivity
 
     private void add(String input) {
         data = data.plus(input);
+        adapter.update(data);
+    }
+
+    private void delete(int position) {
+        data = data.minus(position);
         adapter.update(data);
     }
 
