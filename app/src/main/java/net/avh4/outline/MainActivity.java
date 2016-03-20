@@ -1,20 +1,29 @@
 package net.avh4.outline;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.view.View;
+import android.support.v7.app.AlertDialog;
+import android.text.InputType;
+import android.view.*;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.widget.ListView;
+import com.afollestad.materialdialogs.MaterialDialog;
+import net.avh4.android.PVectorAdapter;
+import org.pcollections.PVector;
+import org.pcollections.TreePVector;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private PVector<String> data = TreePVector.empty();
+    private PVectorAdapter<String> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,8 +36,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                showAddDialog();
             }
         });
 
@@ -40,6 +48,27 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        ListView listView = (ListView) findViewById(R.id.list);
+        assert listView != null;
+        adapter = new PVectorAdapter<>(this, R.layout.list_item_outline, android.R.id.text1, data);
+        listView.setAdapter(adapter);
+    }
+
+    private void showAddDialog() {
+        new MaterialDialog.Builder(MainActivity.this)
+                .inputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
+                .input(null, null, new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                        MainActivity.this.add(input.toString());
+                    }
+                }).show();
+    }
+
+    private void add(String input) {
+        data = data.plus(input);
+        adapter.update(data);
     }
 
     @Override
