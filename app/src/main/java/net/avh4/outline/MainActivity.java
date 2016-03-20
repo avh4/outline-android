@@ -65,7 +65,6 @@ public class MainActivity extends AppCompatActivity
 
     private void showItemActionDialog(final int position) {
         new MaterialDialog.Builder(MainActivity.this)
-                .title(R.string.dialog_item_actions_title)
                 .items(getString(R.string.action_item_delete))
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
