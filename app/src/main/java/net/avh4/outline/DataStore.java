@@ -6,6 +6,8 @@ import net.avh4.F1;
 import net.avh4.json.JsonHelper;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
+import rx.Observable;
+import rx.subjects.ReplaySubject;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -14,7 +16,7 @@ class DataStore {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
     private PVector<String> items;
-    private Listener listener = null;
+    private ReplaySubject<PVector<String>> outlineSubject = ReplaySubject.createWithSize(1);
     private EventStore eventStore;
 
     DataStore() {
@@ -32,6 +34,7 @@ class DataStore {
                 items = event.execute(items);
             }
         });
+        outlineSubject.onNext(items);
     }
 
     private void processEvent(Event e) {
@@ -40,7 +43,7 @@ class DataStore {
         }
         eventStore.record(e);
         items = e.execute(items);
-        listener.onItemsChanged(items);
+        outlineSubject.onNext(items);
     }
 
     void addItem(String input) {
@@ -53,13 +56,8 @@ class DataStore {
         processEvent(e);
     }
 
-    void setListener(Listener listener) {
-        this.listener = listener;
-        listener.onItemsChanged(items);
-    }
-
-    interface Listener {
-        void onItemsChanged(PVector<String> items);
+    Observable<PVector<String>> getOutline() {
+        return outlineSubject;
     }
 
     interface Event {

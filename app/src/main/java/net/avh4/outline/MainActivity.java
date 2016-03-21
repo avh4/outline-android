@@ -19,8 +19,8 @@ import android.widget.ListView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import net.avh4.android.PVectorAdapter;
 import net.avh4.android.ThrowableDialog;
-import org.pcollections.PVector;
 import org.pcollections.TreePVector;
+import rx.android.schedulers.AndroidSchedulers;
 
 import java.io.IOException;
 
@@ -28,8 +28,6 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private final DataStore store = new DataStore();
-
-    private PVectorAdapter<String> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,13 +89,10 @@ public class MainActivity extends AppCompatActivity
 
         ListView listView = (ListView) findViewById(R.id.list);
         assert listView != null;
-        adapter = new PVectorAdapter<>(this, R.layout.list_item_outline, android.R.id.text1, TreePVector.<String>empty());
-        store.setListener(new DataStore.Listener() {
-            @Override
-            public void onItemsChanged(PVector<String> items) {
-                adapter.update(items);
-            }
-        });
+        PVectorAdapter<String> adapter = new PVectorAdapter<>(this, R.layout.list_item_outline, android.R.id.text1, TreePVector.<String>empty());
+        store.getOutline()
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe(adapter);
         listView.setAdapter(adapter);
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override

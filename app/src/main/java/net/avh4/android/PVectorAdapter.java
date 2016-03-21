@@ -7,8 +7,10 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import org.pcollections.PVector;
+import org.pcollections.TreePVector;
+import rx.Observer;
 
-public class PVectorAdapter<T> extends BaseAdapter {
+public class PVectorAdapter<T> extends BaseAdapter implements Observer<PVector<T>> {
     private final Context context;
     private final int itemLayout;
     private final int textViewId;
@@ -54,8 +56,20 @@ public class PVectorAdapter<T> extends BaseAdapter {
         return view;
     }
 
-    public void update(PVector<T> newData) {
+    @Override
+    public void onNext(PVector<T> newData) {
         data = newData;
         notifyDataSetChanged();
+    }
+
+    @Override
+    public void onCompleted() {
+        // do nothing
+    }
+
+    @Override
+    public void onError(Throwable e) {
+        data = TreePVector.empty();
+        ThrowableDialog.show(context, new RuntimeException("Not implemented: handle observable errors", e));
     }
 }
