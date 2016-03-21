@@ -2,9 +2,8 @@ package net.avh4.outline;
 
 import android.content.Context;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import net.avh4.F1;
+import net.avh4.json.JsonHelper;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
@@ -70,18 +69,17 @@ class DataStore {
     }
 
     static class Add implements Event {
+        static final JsonHelper.ValueCallback<Add> fromJson = new JsonHelper.ValueCallback<Add>() {
+            @Override
+            public Add call(JsonHelper.ValueContext context) throws IOException {
+                String value = context.getString();
+                return new Add(value);
+            }
+        };
         private final String input;
 
         Add(String input) {
             this.input = input;
-        }
-
-        static Add fromJson(JsonParser parser) throws IOException {
-            if (parser.nextToken() != JsonToken.VALUE_STRING) {
-                throw new IOException("Add: expected string value, but got " + parser.getCurrentToken());
-            }
-            String value = parser.getText();
-            return new Add(value);
         }
 
         @Override
@@ -96,18 +94,17 @@ class DataStore {
     }
 
     static class Delete implements Event {
+        static final JsonHelper.ValueCallback<Delete> fromJson = new JsonHelper.ValueCallback<Delete>() {
+            @Override
+            public Delete call(JsonHelper.ValueContext context) throws IOException {
+                int value = context.getInt();
+                return new Delete(value);
+            }
+        };
         private final int position;
 
         Delete(int position) {
             this.position = position;
-        }
-
-        static Delete fromJson(JsonParser parser) throws IOException {
-            if (parser.nextToken() != JsonToken.VALUE_NUMBER_INT) {
-                throw new IOException("Delete: expected integer value");
-            }
-            int value = parser.getIntValue();
-            return new Delete(value);
         }
 
         @Override

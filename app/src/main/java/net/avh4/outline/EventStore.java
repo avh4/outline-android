@@ -1,9 +1,14 @@
 package net.avh4.outline;
 
 import android.content.Context;
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.core.io.SerializedString;
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import net.avh4.F1;
+import net.avh4.json.JsonHelper;
+import org.pcollections.HashPMap;
+import org.pcollections.HashTreePMap;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,25 +57,26 @@ class EventStore {
 
     private DataStore.Event parseFile(File file) throws IOException {
         JsonParser parser = jsonFactory.createParser(file);
-        if (parser.nextToken() != JsonToken.START_OBJECT) {
-            throw new IOException("Expected JSON object");
-        }
-        if (!parser.nextFieldName(new SerializedString("type"))) {
-            throw new IOException("Expected type field");
-        }
+        JsonHelper helper = new JsonHelper(parser);
 
-        String type = parser.nextTextValue();
-        if (!parser.nextFieldName(new SerializedString("data"))) {
-            throw new IOException("Expected data field");
-        }
-        DataStore.Event event;
-        if (type.equals(DataStore.Add.class.getCanonicalName())) {
-            event = DataStore.Add.fromJson(parser);
-        } else if (type.equals(DataStore.Delete.class.getCanonicalName())) {
-            event = DataStore.Delete.fromJson(parser);
-        } else {
-            throw new IOException("Invalid event type: " + type);
-        }
+        DataStore.Event event = helper.getObject(new JsonHelper.ObjectCallback<DataStore.Event>() {
+            @Override
+            public DataStore.Event call(JsonHelper.ObjectContext context) throws IOException {
+                String type = context.getString("type");
+
+                HashPMap<String, JsonHelper.ValueCallback<? extends DataStore.Event>> typeMap =
+                        HashTreePMap.<String, JsonHelper.ValueCallback<? extends DataStore.Event>>empty()
+                                .plus(DataStore.Add.class.getCanonicalName(), DataStore.Add.fromJson)
+                                .plus(DataStore.Delete.class.getCanonicalName(), DataStore.Delete.fromJson);
+
+                JsonHelper.ValueCallback<? extends DataStore.Event> fromJson = typeMap.get(type);
+                if (fromJson == null) {
+                    throw new IOException("Invalid event type: " + type);
+                }
+                return context.getValue("data", fromJson);
+            }
+        });
+
         parser.close();
         return event;
     }
