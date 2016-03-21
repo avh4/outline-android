@@ -1,5 +1,6 @@
 package net.avh4.outline;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -17,8 +18,11 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import net.avh4.android.PVectorAdapter;
+import net.avh4.android.ThrowableDialog;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -30,6 +34,37 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        final MaterialDialog loadingDialog = new MaterialDialog.Builder(this)
+                .content(R.string.dialog_loading_initial)
+                .progress(true, 0)
+                .cancelable(false)
+                .show();
+
+        new AsyncTask<Void, Void, IOException>() {
+            @Override
+            protected IOException doInBackground(Void... params) {
+                try {
+                    store.initialize(MainActivity.this);
+                    return null;
+                } catch (IOException e) {
+                    return e;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(IOException error) {
+                loadingDialog.dismiss();
+                if (error == null) {
+                    onDataLoaded();
+                } else {
+                    ThrowableDialog.show(MainActivity.this, error);
+                }
+            }
+        }.execute();
+    }
+
+    private void onDataLoaded() {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
