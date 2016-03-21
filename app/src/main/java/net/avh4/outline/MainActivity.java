@@ -23,7 +23,8 @@ import org.pcollections.TreePVector;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private PVector<String> data = TreePVector.empty();
+    private final DataStore store = new DataStore();
+
     private PVectorAdapter<String> adapter;
 
     @Override
@@ -55,7 +56,13 @@ public class MainActivity extends AppCompatActivity
 
         ListView listView = (ListView) findViewById(R.id.list);
         assert listView != null;
-        adapter = new PVectorAdapter<>(this, R.layout.list_item_outline, android.R.id.text1, data);
+        adapter = new PVectorAdapter<>(this, R.layout.list_item_outline, android.R.id.text1, TreePVector.<String>empty());
+        store.setListener(new DataStore.Listener() {
+            @Override
+            public void onItemsChanged(PVector<String> items) {
+                adapter.update(items);
+            }
+        });
         listView.setAdapter(adapter);
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
@@ -72,7 +79,7 @@ public class MainActivity extends AppCompatActivity
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                        delete(position);
+                        store.deleteItem(position);
                     }
                 })
                 .show();
@@ -84,22 +91,12 @@ public class MainActivity extends AppCompatActivity
                 .input(null, null, new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                        MainActivity.this.add(input.toString());
+                        store.addItem(input.toString());
                     }
                 })
                 .canceledOnTouchOutside(false)
                 .negativeText(android.R.string.cancel)
                 .show();
-    }
-
-    private void add(String input) {
-        data = data.plus(input);
-        adapter.update(data);
-    }
-
-    private void delete(int position) {
-        data = data.minus(position);
-        adapter.update(data);
     }
 
     @Override
