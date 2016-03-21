@@ -34,8 +34,14 @@ class EventStore {
 
     void iterate(F1<DataStore.Event> process) throws IOException {
         File[] files = context.getFilesDir().listFiles();
+        long lastSeq = Long.MIN_VALUE;
         for (File file : files) {
             try {
+                long seq = Long.parseLong(file.getName().replace(".json", ""));
+                if (lastSeq >= seq) {
+                    throw new IOException("Got files our of order: " + file.getName() + " after " + lastSeq);
+                }
+                lastSeq = seq;
                 DataStore.Event event = parseFile(file);
                 process.call(event);
             } catch (IOException e) {
