@@ -13,10 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class DataStore {
 
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
     private PVector<String> items;
     private Listener listener = null;
     private EventStore eventStore;
-    private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     DataStore() {
         items = TreePVector.empty();
@@ -76,6 +76,14 @@ class DataStore {
             this.input = input;
         }
 
+        static Add fromJson(JsonParser parser) throws IOException {
+            if (parser.nextToken() != JsonToken.VALUE_STRING) {
+                throw new IOException("Add: expected string value, but got " + parser.getCurrentToken());
+            }
+            String value = parser.getText();
+            return new Add(value);
+        }
+
         @Override
         public PVector<String> execute(PVector<String> items) {
             return items.plus(input);
@@ -84,14 +92,6 @@ class DataStore {
         @Override
         public void toJson(JsonGenerator generator) throws IOException {
             generator.writeString(input);
-        }
-
-        static Add fromJson(JsonParser parser) throws IOException {
-            if (parser.nextToken() != JsonToken.VALUE_STRING) {
-                throw new IOException("Add: expected string value, but got " + parser.getCurrentToken());
-            }
-            String value = parser.getText();
-            return new Add(value);
         }
     }
 
@@ -102,6 +102,14 @@ class DataStore {
             this.position = position;
         }
 
+        static Delete fromJson(JsonParser parser) throws IOException {
+            if (parser.nextToken() != JsonToken.VALUE_NUMBER_INT) {
+                throw new IOException("Delete: expected integer value");
+            }
+            int value = parser.getIntValue();
+            return new Delete(value);
+        }
+
         @Override
         public PVector<String> execute(PVector<String> items) {
             return items.minus(position);
@@ -110,14 +118,6 @@ class DataStore {
         @Override
         public void toJson(JsonGenerator generator) throws IOException {
             generator.writeNumber(position);
-        }
-
-        static Delete fromJson(JsonParser parser) throws IOException {
-            if (parser.nextToken() != JsonToken.VALUE_NUMBER_INT) {
-                throw new IOException("Delete: expected integer value");
-            }
-            int value = parser.getIntValue();
-            return new Delete(value);
         }
     }
 }
