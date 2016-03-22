@@ -13,7 +13,7 @@ public class ThrowableDialog {
         TextView textView = new TextView(context);
         textView.setHorizontallyScrolling(true);
         textView.setText(stackTrace);
-        Log.e("", "Unexpected error", error);
+        Log.e("ThrowableDialog", "Unexpected error", error);
         return new MaterialDialog.Builder(context)
                 .title(R.string.dialog_error_title)
                 .cancelable(false)

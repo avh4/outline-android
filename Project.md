@@ -2,6 +2,7 @@
 ## Backlog
 
   - I can add items as children
+  - I can import a list of items
   - I can rename items
 
 ## Finished

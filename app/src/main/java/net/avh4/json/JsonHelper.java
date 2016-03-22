@@ -13,6 +13,10 @@ public class JsonHelper {
         valueContext = new ValueContext(parser);
     }
 
+    private static void throwException(String expected, JsonParser parser) throws IOException {
+        throw new IOException("Expected " + expected + ", but got " + parser.getCurrentToken() + " " + parser.getCurrentLocation());
+    }
+
     public <T> T getObject(ObjectCallback<T> callback) throws IOException {
         return valueContext.getObject(callback);
     }
@@ -36,25 +40,25 @@ public class JsonHelper {
 
         public String getString() throws IOException {
             if (parser.nextToken() != JsonToken.VALUE_STRING) {
-                throw new IOException("Expected string value, but got " + parser.getCurrentToken());
+                throwException("string value", parser);
             }
             return parser.getText();
         }
 
         public int getInt() throws IOException {
             if (parser.nextToken() != JsonToken.VALUE_NUMBER_INT) {
-                throw new IOException("Expected integer value, but got " + parser.getCurrentToken());
+                throwException("integer value", parser);
             }
             return parser.getIntValue();
         }
 
-        public <T> T getValue(ValueCallback<T> valueCallback) throws IOException {
+        <T> T getValue(ValueCallback<T> valueCallback) throws IOException {
             return valueCallback.call(this);
         }
 
         public <T> T getObject(ObjectCallback<T> callback) throws IOException {
             if (parser.nextToken() != JsonToken.START_OBJECT) {
-                throw new IOException("Expected JSON object");
+                throwException("JSON object", parser);
             }
 
             T result = callback.call(objectContext);
@@ -64,7 +68,6 @@ public class JsonHelper {
             }
 
             return result;
-
         }
     }
 
@@ -79,7 +82,7 @@ public class JsonHelper {
 
         private void checkField(String fieldName) throws IOException {
             if (!parser.nextFieldName(new SerializedString(fieldName))) {
-                throw new IOException("Expected field named " + fieldName);
+                throwException("field name " + fieldName, parser);
             }
         }
 

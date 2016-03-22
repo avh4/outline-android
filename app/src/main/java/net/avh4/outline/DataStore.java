@@ -4,8 +4,6 @@ import android.content.Context;
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.avh4.F1;
 import net.avh4.json.JsonHelper;
-import org.pcollections.PVector;
-import org.pcollections.TreePVector;
 import rx.Observable;
 import rx.subjects.ReplaySubject;
 
@@ -15,12 +13,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class DataStore {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
-    private PVector<String> items;
-    private ReplaySubject<PVector<String>> outlineSubject = ReplaySubject.createWithSize(1);
+    private final ReplaySubject<Outline> outlineSubject;
+    private final IdGenerator idGenerator;
+    private Outline outline;
     private EventStore eventStore;
 
-    DataStore() {
-        items = TreePVector.empty();
+    DataStore(String deviceId) {
+        outline = Outline.empty();
+        outlineSubject = ReplaySubject.createWithSize(1);
+        idGenerator = new IdGenerator(deviceId);
     }
 
     void initialize(Context context) throws IOException {
@@ -31,10 +32,10 @@ class DataStore {
         eventStore.iterate(new F1<Event>() {
             @Override
             public void call(Event event) {
-                items = event.execute(items);
+                outline = event.execute(outline);
             }
         });
-        outlineSubject.onNext(items);
+        outlineSubject.onNext(outline);
     }
 
     private void processEvent(Event e) {
@@ -42,26 +43,27 @@ class DataStore {
             throw new IllegalStateException("Not initialized");
         }
         eventStore.record(e);
-        items = e.execute(items);
-        outlineSubject.onNext(items);
+        outline = e.execute(outline);
+        outlineSubject.onNext(outline);
     }
 
-    void addItem(String input) {
-        Event e = new Add(input);
+    void addItem(OutlineNodeId parent, String input) {
+        OutlineNodeId id = idGenerator.next();
+        Event e = new Add(parent, id, input);
         processEvent(e);
     }
 
-    void deleteItem(int position) {
-        Event e = new Delete(position);
+    void deleteItem(OutlineNodeId node) {
+        Event e = new Delete(node);
         processEvent(e);
     }
 
-    Observable<PVector<String>> getOutline() {
+    Observable<Outline> getOutline() {
         return outlineSubject;
     }
 
     interface Event {
-        PVector<String> execute(PVector<String> items);
+        Outline execute(Outline outline);
 
         void toJson(JsonGenerator generator) throws IOException;
     }
@@ -70,24 +72,39 @@ class DataStore {
         static final JsonHelper.ValueCallback<Add> fromJson = new JsonHelper.ValueCallback<Add>() {
             @Override
             public Add call(JsonHelper.ValueContext context) throws IOException {
-                String value = context.getString();
-                return new Add(value);
+                return context.getObject(new JsonHelper.ObjectCallback<Add>() {
+                    @Override
+                    public Add call(JsonHelper.ObjectContext context) throws IOException {
+                        String parent = context.getString("parent");
+                        String id = context.getString("id");
+                        String value = context.getString("value");
+                        return new Add(new OutlineNodeId(parent), new OutlineNodeId(id), value);
+                    }
+                });
             }
         };
-        private final String input;
+        private final OutlineNodeId parent;
+        private final OutlineNodeId id;
+        private final String value;
 
-        Add(String input) {
-            this.input = input;
+        Add(OutlineNodeId parent, OutlineNodeId id, String value) {
+            this.parent = parent;
+            this.id = id;
+            this.value = value;
         }
 
         @Override
-        public PVector<String> execute(PVector<String> items) {
-            return items.plus(input);
+        public Outline execute(Outline outline) {
+            return outline.addChild(parent, id, value);
         }
 
         @Override
         public void toJson(JsonGenerator generator) throws IOException {
-            generator.writeString(input);
+            generator.writeStartObject();
+            generator.writeStringField("parent", parent.toString());
+            generator.writeStringField("id", id.toString());
+            generator.writeStringField("value", value);
+            generator.writeEndObject();
         }
     }
 
@@ -95,24 +112,24 @@ class DataStore {
         static final JsonHelper.ValueCallback<Delete> fromJson = new JsonHelper.ValueCallback<Delete>() {
             @Override
             public Delete call(JsonHelper.ValueContext context) throws IOException {
-                int value = context.getInt();
-                return new Delete(value);
+                String node = context.getString();
+                return new Delete(new OutlineNodeId(node));
             }
         };
-        private final int position;
+        private final OutlineNodeId node;
 
-        Delete(int position) {
-            this.position = position;
+        Delete(OutlineNodeId node) {
+            this.node = node;
         }
 
         @Override
-        public PVector<String> execute(PVector<String> items) {
-            return items.minus(position);
+        public Outline execute(Outline outline) {
+            return outline.deleteNode(node);
         }
 
         @Override
         public void toJson(JsonGenerator generator) throws IOException {
-            generator.writeNumber(position);
+            node.toJson(generator);
         }
     }
 }

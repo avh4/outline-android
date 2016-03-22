@@ -17,17 +17,19 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import com.afollestad.materialdialogs.MaterialDialog;
-import net.avh4.android.PVectorAdapter;
 import net.avh4.android.ThrowableDialog;
-import org.pcollections.TreePVector;
-import rx.android.schedulers.AndroidSchedulers;
+import rx.Observable;
+import rx.functions.Action1;
+import rx.subjects.ReplaySubject;
 
 import java.io.IOException;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private final DataStore store = new DataStore();
+    private final DataStore store = new DataStore(UUID.randomUUID().toString());
+    private ReplaySubject<OutlineNodeId> focus = ReplaySubject.createWithSize(1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +74,12 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showAddDialog();
+                focus.first().subscribe(new Action1<OutlineNodeId>() {
+                    @Override
+                    public void call(OutlineNodeId parent) {
+                        showAddDialog(parent);
+                    }
+                });
             }
         });
 
@@ -89,39 +96,45 @@ public class MainActivity extends AppCompatActivity
 
         ListView listView = (ListView) findViewById(R.id.list);
         assert listView != null;
-        PVectorAdapter<String> adapter = new PVectorAdapter<>(this, R.layout.list_item_outline, android.R.id.text1, TreePVector.<String>empty());
-        store.getOutline()
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .subscribe(adapter);
+        final OutlineAdapter adapter = new OutlineAdapter(this, store.getOutline(), focus);
         listView.setAdapter(adapter);
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-                showItemActionDialog(position);
+                OutlineNode node = adapter.getItem(position);
+                showItemActionDialog(node.getId());
                 return true;
+            }
+        });
+
+        Observable<Outline> initialFocus = store.getOutline().first();
+        initialFocus.subscribe(new Action1<Outline>() {
+            @Override
+            public void call(Outline outline) {
+                focus.onNext(outline.getRoot());
             }
         });
     }
 
-    private void showItemActionDialog(final int position) {
+    private void showItemActionDialog(final OutlineNodeId node) {
         new MaterialDialog.Builder(MainActivity.this)
                 .items(getString(R.string.action_item_delete))
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                        store.deleteItem(position);
+                        store.deleteItem(node);
                     }
                 })
                 .show();
     }
 
-    private void showAddDialog() {
+    private void showAddDialog(final OutlineNodeId parent) {
         new MaterialDialog.Builder(MainActivity.this)
                 .inputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
                 .input(null, null, new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                        store.addItem(input.toString());
+                        store.addItem(parent, input.toString());
                     }
                 })
                 .canceledOnTouchOutside(false)
