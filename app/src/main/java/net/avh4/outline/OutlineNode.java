@@ -9,7 +9,7 @@ class OutlineNode {
     private final PVector<OutlineNodeId> children;
 
     OutlineNode(OutlineNodeId id) {
-        this(id, "<root node>");
+        this(id, "Outline");
     }
 
     OutlineNode(OutlineNodeId id, String text) {

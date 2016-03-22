@@ -8,4 +8,5 @@
     <string name="action_item_delete">Delete</string>
     <string name="dialog_loading_initial">Loading</string>
     <string name="dialog_error_title">Unexpected error</string>
+    <string name="back_to_node">Back to %1$s</string>
 </resources>

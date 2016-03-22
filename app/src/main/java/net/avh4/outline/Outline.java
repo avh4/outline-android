@@ -37,8 +37,8 @@ class Outline {
         return new Outline(root, newNodes);
     }
 
-    OutlineNodeId getRoot() {
-        return root;
+    OutlineNode getRoot() {
+        return nodes.get(root);
     }
 
     OutlineNode getNode(OutlineNodeId id) {

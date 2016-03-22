@@ -16,13 +16,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import net.avh4.android.ThrowableDialog;
+import net.avh4.rx.History;
 import rx.Observable;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
-import rx.subjects.ReplaySubject;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -31,22 +32,21 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private final DataStore store = new DataStore(UUID.randomUUID().toString());
-    private final ReplaySubject<OutlineNodeId> focus = ReplaySubject.createWithSize(1);
     private final Observable<OutlineView> outlineView;
+    private final History<OutlineNode> history = new History<>();
     private final Observable<String> title;
 
     public MainActivity() {
-        outlineView = Observable.combineLatest(store.getOutline(), focus,
-                new Func2<Outline, OutlineNodeId, OutlineView>() {
+        outlineView = Observable.combineLatest(store.getOutline(), history.getCurrent(),
+                new Func2<Outline, OutlineNode, OutlineView>() {
                     @Override
-                    public OutlineView call(Outline outline, OutlineNodeId focus) {
-                        return new OutlineView(outline, focus);
+                    public OutlineView call(Outline outline, OutlineNode focus) {
+                        return new OutlineView(outline, focus.getId());
                     }
                 });
-        title = Observable.concat(Observable.<String>just(null), outlineView.map(new Func1<OutlineView, String>() {
+        title = Observable.concat(Observable.<String>just(null), history.getCurrent().map(new Func1<OutlineNode, String>() {
             @Override
-            public String call(OutlineView outlineView) {
-                OutlineNode node = outlineView.getNode();
+            public String call(OutlineNode node) {
                 if (node.isRootNode()) {
                     return null;
                 } else {
@@ -90,8 +90,12 @@ public class MainActivity extends AppCompatActivity
 
         title.subscribe(new Action1<String>() {
             @Override
-            public void call(String s) {
-                setTitle(s);
+            public void call(String title) {
+                if (title == null) {
+                    setTitle(R.string.app_name);
+                } else {
+                    setTitle(title);
+                }
             }
         });
     }
@@ -106,10 +110,10 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                focus.first().subscribe(new Action1<OutlineNodeId>() {
+                history.getCurrent().first().subscribe(new Action1<OutlineNode>() {
                     @Override
-                    public void call(OutlineNodeId parent) {
-                        showAddDialog(parent);
+                    public void call(OutlineNode parent) {
+                        showAddDialog(parent.getId());
                     }
                 });
             }
@@ -134,7 +138,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 OutlineNode node = adapter.getItem(position);
-                focus.onNext(node.getId());
+                history.push(node);
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -150,7 +154,27 @@ public class MainActivity extends AppCompatActivity
         initialFocus.subscribe(new Action1<Outline>() {
             @Override
             public void call(Outline outline) {
-                focus.onNext(outline.getRoot());
+                history.push(outline.getRoot());
+            }
+        });
+
+        final TextView backLabel = (TextView) findViewById(R.id.back_label);
+        assert backLabel != null;
+        history.getParent().subscribe(new Action1<OutlineNode>() {
+            @Override
+            public void call(OutlineNode parent) {
+                if (parent == null) {
+                    backLabel.setVisibility(View.GONE);
+                } else {
+                    backLabel.setText(getString(R.string.back_to_node, parent.getText()));
+                    backLabel.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        backLabel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                history.pop();
             }
         });
     }
