@@ -4,11 +4,13 @@ import org.pcollections.PVector;
 
 class OutlineView {
     private final Outline outline;
+    private final OutlineNode focusNode;
     private final PVector<OutlineNodeId> children;
 
     OutlineView(Outline outline, OutlineNodeId focus) {
         this.outline = outline;
-        children = outline.getNode(focus).getChildren();
+        focusNode = outline.getNode(focus);
+        children = focusNode.getChildren();
     }
 
     int getNumberOfChildren() {
@@ -18,5 +20,9 @@ class OutlineView {
     OutlineNode getChild(int position) {
         OutlineNodeId childId = children.get(position);
         return outline.getNode(childId);
+    }
+
+    OutlineNode getNode() {
+        return focusNode;
     }
 }

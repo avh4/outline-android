@@ -20,6 +20,8 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import net.avh4.android.ThrowableDialog;
 import rx.Observable;
 import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.functions.Func2;
 import rx.subjects.ReplaySubject;
 
 import java.io.IOException;
@@ -29,7 +31,30 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private final DataStore store = new DataStore(UUID.randomUUID().toString());
-    private ReplaySubject<OutlineNodeId> focus = ReplaySubject.createWithSize(1);
+    private final ReplaySubject<OutlineNodeId> focus = ReplaySubject.createWithSize(1);
+    private final Observable<OutlineView> outlineView;
+    private final Observable<String> title;
+
+    public MainActivity() {
+        outlineView = Observable.combineLatest(store.getOutline(), focus,
+                new Func2<Outline, OutlineNodeId, OutlineView>() {
+                    @Override
+                    public OutlineView call(Outline outline, OutlineNodeId focus) {
+                        return new OutlineView(outline, focus);
+                    }
+                });
+        title = Observable.concat(Observable.<String>just(null), outlineView.map(new Func1<OutlineView, String>() {
+            @Override
+            public String call(OutlineView outlineView) {
+                OutlineNode node = outlineView.getNode();
+                if (node.isRootNode()) {
+                    return null;
+                } else {
+                    return node.getText();
+                }
+            }
+        }));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +87,13 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         }.execute();
+
+        title.subscribe(new Action1<String>() {
+            @Override
+            public void call(String s) {
+                setTitle(s);
+            }
+        });
     }
 
     private void onDataLoaded() {
@@ -96,8 +128,15 @@ public class MainActivity extends AppCompatActivity
 
         ListView listView = (ListView) findViewById(R.id.list);
         assert listView != null;
-        final OutlineAdapter adapter = new OutlineAdapter(this, store.getOutline(), focus);
+        final OutlineAdapter adapter = new OutlineAdapter(this, outlineView);
         listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                OutlineNode node = adapter.getItem(position);
+                focus.onNext(node.getId());
+            }
+        });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {

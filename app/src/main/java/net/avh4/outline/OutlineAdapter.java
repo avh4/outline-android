@@ -10,20 +10,14 @@ import android.widget.TextView;
 import net.avh4.android.ThrowableDialog;
 import rx.Observable;
 import rx.functions.Action1;
-import rx.functions.Func2;
 
 class OutlineAdapter extends BaseAdapter {
     private final Context context;
     private OutlineView current;
 
-    OutlineAdapter(final Context context, Observable<Outline> outline, Observable<OutlineNodeId> focus) {
+    OutlineAdapter(final Context context, Observable<OutlineView> outlineView) {
         this.context = context;
-        Observable.combineLatest(outline, focus, new Func2<Outline, OutlineNodeId, OutlineView>() {
-            @Override
-            public OutlineView call(Outline outline, OutlineNodeId focus) {
-                return new OutlineView(outline, focus);
-            }
-        }).subscribe(new Action1<OutlineView>() {
+        outlineView.subscribe(new Action1<OutlineView>() {
             @Override
             public void call(OutlineView outlineView) {
                 current = outlineView;

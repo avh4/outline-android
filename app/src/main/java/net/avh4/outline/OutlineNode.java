@@ -41,4 +41,8 @@ class OutlineNode {
     OutlineNode removeChild(OutlineNodeId childId) {
         return new OutlineNode(id, text, children.minus(childId));
     }
+
+    boolean isRootNode() {
+        return id.isRootNode();
+    }
 }

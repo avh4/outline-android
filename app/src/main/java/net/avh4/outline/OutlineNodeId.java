@@ -15,6 +15,10 @@ class OutlineNodeId {
         generator.writeString(id);
     }
 
+    boolean isRootNode() {
+        return id.equals("");
+    }
+
     @Override
     public String toString() {
         return id;
