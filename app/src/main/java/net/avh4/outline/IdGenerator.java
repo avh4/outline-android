@@ -1,13 +1,14 @@
 package net.avh4.outline;
 
-class IdGenerator {
+class IdGenerator implements Generator<OutlineNodeId> {
     private final String deviceId;
 
     IdGenerator(String deviceId) {
         this.deviceId = deviceId;
     }
 
-    OutlineNodeId next() {
+    @Override
+    public OutlineNodeId next() {
         return new OutlineNodeId(deviceId + "-" + System.currentTimeMillis());
     }
 }

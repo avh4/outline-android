@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private final DataStore store = new DataStore();
-    private final IdGenerator idGenerator = new IdGenerator(UUID.randomUUID().toString());
+    private final Generator<OutlineNodeId> idGenerator = new IdGenerator(UUID.randomUUID().toString());
 
     private final Observable<OutlineView> outlineView;
     private final History<OutlineNode> history = new History<>();
