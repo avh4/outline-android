@@ -31,7 +31,9 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private final DataStore store = new DataStore(UUID.randomUUID().toString());
+    private final DataStore store = new DataStore();
+    private final IdGenerator idGenerator = new IdGenerator(UUID.randomUUID().toString());
+
     private final Observable<OutlineView> outlineView;
     private final History<OutlineNode> history = new History<>();
     private final Observable<String> title;
@@ -197,7 +199,8 @@ public class MainActivity extends AppCompatActivity
                 .input(null, null, new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                        store.addItem(parent, input.toString());
+                        OutlineNodeId itemId = idGenerator.next();
+                        store.addItem(parent, itemId, input.toString());
                     }
                 })
                 .canceledOnTouchOutside(false)

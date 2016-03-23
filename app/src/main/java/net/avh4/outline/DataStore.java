@@ -14,14 +14,12 @@ class DataStore {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final ReplaySubject<Outline> outlineSubject;
-    private final IdGenerator idGenerator;
     private Outline outline;
     private EventStore eventStore;
 
-    DataStore(String deviceId) {
+    DataStore() {
         outline = Outline.empty();
         outlineSubject = ReplaySubject.createWithSize(1);
-        idGenerator = new IdGenerator(deviceId);
     }
 
     void initialize(Context context) throws IOException {
@@ -47,9 +45,8 @@ class DataStore {
         outlineSubject.onNext(outline);
     }
 
-    void addItem(OutlineNodeId parent, String input) {
-        OutlineNodeId id = idGenerator.next();
-        Event e = new Add(parent, id, input);
+    void addItem(OutlineNodeId parent, OutlineNodeId itemId, String text) {
+        Event e = new Add(parent, itemId, text);
         processEvent(e);
     }
 
