@@ -7,7 +7,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import net.avh4.Event;
 import net.avh4.F1;
-import net.avh4.json.JsonHelper;
+import net.avh4.json.FromJsonObject;
+import net.avh4.json.FromJsonValue;
+import net.avh4.json.JsonObjectReader;
+import net.avh4.json.JsonValueReader;
 import org.pcollections.HashPMap;
 import org.pcollections.HashTreePMap;
 
@@ -58,25 +61,25 @@ class EventStore {
 
     private Event<Outline> parseFile(File file) throws IOException {
         JsonParser parser = jsonFactory.createParser(file);
-        JsonHelper helper = new JsonHelper(parser);
+        JsonValueReader helper = new JsonValueReader(parser);
 
-        Event<Outline> event = helper.getObject(new JsonHelper.ObjectCallback<Event<Outline>>() {
+        Event<Outline> event = helper.getObject(new FromJsonObject<Event<Outline>>() {
             @Override
-            public Event<Outline> call(JsonHelper.ObjectContext context) throws IOException {
-                String type = context.getString("type");
+            public Event<Outline> call(JsonObjectReader json) throws IOException {
+                String type = json.getString("type");
 
-                HashPMap<String, JsonHelper.ValueCallback<? extends Event<Outline>>> typeMap =
-                        HashTreePMap.<String, JsonHelper.ValueCallback<? extends Event<Outline>>>empty()
+                HashPMap<String, FromJsonValue<? extends Event<Outline>>> typeMap =
+                        HashTreePMap.<String, FromJsonValue<? extends Event<Outline>>>empty()
                                 .plus("net.avh4.outline.DataStore.Add", Add.fromJson)
                                 .plus(Add.class.getCanonicalName(), Add.fromJson)
                                 .plus("net.avh4.outline.DataStore.Delete", Delete.fromJson)
                                 .plus(Delete.class.getCanonicalName(), Delete.fromJson);
 
-                JsonHelper.ValueCallback<? extends Event<Outline>> fromJson = typeMap.get(type);
+                FromJsonValue<? extends Event<Outline>> fromJson = typeMap.get(type);
                 if (fromJson == null) {
                     throw new IOException("Invalid event type: " + type);
                 }
-                return context.getValue("data", fromJson);
+                return json.getValue("data", fromJson);
             }
         });
 

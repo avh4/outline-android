@@ -2,17 +2,20 @@ package net.avh4.outline;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.avh4.Event;
-import net.avh4.json.JsonHelper;
+import net.avh4.json.FromJsonObject;
+import net.avh4.json.FromJsonValue;
+import net.avh4.json.JsonObjectReader;
+import net.avh4.json.JsonValueReader;
 
 import java.io.IOException;
 
 class Add implements Event<Outline> {
-    static final JsonHelper.ValueCallback<Add> fromJson = new JsonHelper.ValueCallback<Add>() {
+    static final FromJsonValue<Add> fromJson = new FromJsonValue<Add>() {
         @Override
-        public Add call(JsonHelper.ValueContext context) throws IOException {
-            return context.getObject(new JsonHelper.ObjectCallback<Add>() {
+        public Add call(JsonValueReader context) throws IOException {
+            return context.getObject(new FromJsonObject<Add>() {
                 @Override
-                public Add call(JsonHelper.ObjectContext context) throws IOException {
+                public Add call(JsonObjectReader context) throws IOException {
                     String parent = context.getString("parent");
                     String id = context.getString("id");
                     String value = context.getString("value");
