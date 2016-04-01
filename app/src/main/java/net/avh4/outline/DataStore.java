@@ -3,6 +3,8 @@ package net.avh4.outline;
 import android.content.Context;
 import net.avh4.Event;
 import net.avh4.F1;
+import net.avh4.outline.events.Add;
+import net.avh4.outline.events.Delete;
 import rx.Observable;
 import rx.subjects.ReplaySubject;
 
@@ -57,5 +59,4 @@ class DataStore {
     Observable<Outline> getOutline() {
         return outlineSubject;
     }
-
 }

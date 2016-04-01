@@ -5,7 +5,7 @@ import org.pcollections.PMap;
 
 import java.util.Map;
 
-class Outline {
+public class Outline {
     private final OutlineNodeId root;
     private final PMap<OutlineNodeId, OutlineNode> nodes;
 
@@ -19,14 +19,14 @@ class Outline {
         return new Outline(root, HashTreePMap.singleton(root, new OutlineNode(root)));
     }
 
-    Outline addChild(OutlineNodeId parent, OutlineNodeId childId, String input) {
+    public Outline addChild(OutlineNodeId parent, OutlineNodeId childId, String input) {
         PMap<OutlineNodeId, OutlineNode> newNodes = nodes
                 .plus(parent, getNode(parent).addChild(childId))
                 .plus(childId, new OutlineNode(childId, input));
         return new Outline(root, newNodes);
     }
 
-    Outline deleteNode(OutlineNodeId node) {
+    public Outline deleteNode(OutlineNodeId node) {
         if (node.equals(root)) {
             throw new IllegalArgumentException("Cannot delete root node");
         }

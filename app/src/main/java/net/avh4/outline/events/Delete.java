@@ -1,14 +1,17 @@
-package net.avh4.outline;
+package net.avh4.outline.events;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.avh4.Event;
 import net.avh4.json.FromJsonValue;
 import net.avh4.json.JsonValueReader;
+import net.avh4.outline.Outline;
+import net.avh4.outline.OutlineNodeId;
 
 import java.io.IOException;
 
-class Delete implements Event<Outline> {
-    static final FromJsonValue<Delete> fromJson = new FromJsonValue<Delete>() {
+public class Delete implements Event<Outline> {
+    public static final String eventType = "delete";
+    public static final FromJsonValue<Delete> fromJson = new FromJsonValue<Delete>() {
         @Override
         public Delete call(JsonValueReader context) throws IOException {
             String node = context.getString();
@@ -17,7 +20,7 @@ class Delete implements Event<Outline> {
     };
     private final OutlineNodeId node;
 
-    Delete(OutlineNodeId node) {
+    public Delete(OutlineNodeId node) {
         this.node = node;
     }
 
@@ -29,5 +32,10 @@ class Delete implements Event<Outline> {
     @Override
     public void toJson(JsonGenerator generator) throws IOException {
         node.toJson(generator);
+    }
+
+    @Override
+    public String eventType() {
+        return eventType;
     }
 }

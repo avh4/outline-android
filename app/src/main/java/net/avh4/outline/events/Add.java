@@ -1,4 +1,4 @@
-package net.avh4.outline;
+package net.avh4.outline.events;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.avh4.Event;
@@ -6,11 +6,13 @@ import net.avh4.json.FromJsonObject;
 import net.avh4.json.FromJsonValue;
 import net.avh4.json.JsonObjectReader;
 import net.avh4.json.JsonValueReader;
+import net.avh4.outline.Outline;
+import net.avh4.outline.OutlineNodeId;
 
 import java.io.IOException;
 
-class Add implements Event<Outline> {
-    static final FromJsonValue<Add> fromJson = new FromJsonValue<Add>() {
+public class Add implements Event<Outline> {
+    public static final FromJsonValue<Add> fromJson = new FromJsonValue<Add>() {
         @Override
         public Add call(JsonValueReader context) throws IOException {
             return context.getObject(new FromJsonObject<Add>() {
@@ -24,11 +26,12 @@ class Add implements Event<Outline> {
             });
         }
     };
+    public static final String eventType = "add";
     private final OutlineNodeId parent;
     private final OutlineNodeId id;
     private final String value;
 
-    Add(OutlineNodeId parent, OutlineNodeId id, String value) {
+    public Add(OutlineNodeId parent, OutlineNodeId id, String value) {
         this.parent = parent;
         this.id = id;
         this.value = value;
@@ -46,5 +49,10 @@ class Add implements Event<Outline> {
         generator.writeStringField("id", id.toString());
         generator.writeStringField("value", value);
         generator.writeEndObject();
+    }
+
+    @Override
+    public String eventType() {
+        return eventType;
     }
 }

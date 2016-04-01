@@ -8,4 +8,6 @@ public interface Event<T> {
     T execute(T data);
 
     void toJson(JsonGenerator generator) throws IOException;
+
+    String eventType();
 }

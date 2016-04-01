@@ -11,6 +11,8 @@ import net.avh4.json.FromJsonObject;
 import net.avh4.json.FromJsonValue;
 import net.avh4.json.JsonObjectReader;
 import net.avh4.json.JsonValueReader;
+import net.avh4.outline.events.Add;
+import net.avh4.outline.events.Delete;
 import org.pcollections.HashPMap;
 import org.pcollections.HashTreePMap;
 
@@ -31,7 +33,7 @@ class EventStore {
         try {
             JsonGenerator generator = jsonFactory.createGenerator(file, JsonEncoding.UTF8);
             generator.writeStartObject();
-            generator.writeStringField("type", e.getClass().getCanonicalName());
+            generator.writeStringField("type", e.eventType());
             generator.writeFieldName("data");
             e.toJson(generator);
             generator.writeEndObject();
@@ -71,9 +73,11 @@ class EventStore {
                 HashPMap<String, FromJsonValue<? extends Event<Outline>>> typeMap =
                         HashTreePMap.<String, FromJsonValue<? extends Event<Outline>>>empty()
                                 .plus("net.avh4.outline.DataStore.Add", Add.fromJson)
-                                .plus(Add.class.getCanonicalName(), Add.fromJson)
+                                .plus("net.avh4.outline.Add", Add.fromJson)
+                                .plus(Add.eventType, Add.fromJson)
                                 .plus("net.avh4.outline.DataStore.Delete", Delete.fromJson)
-                                .plus(Delete.class.getCanonicalName(), Delete.fromJson);
+                                .plus("net.avh4.outline.Delete", Delete.fromJson)
+                                .plus(Delete.eventType, Delete.fromJson);
 
                 FromJsonValue<? extends Event<Outline>> fromJson = typeMap.get(type);
                 if (fromJson == null) {

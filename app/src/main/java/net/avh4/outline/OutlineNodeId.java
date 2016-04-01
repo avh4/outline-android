@@ -4,14 +4,14 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
 
-class OutlineNodeId {
+public class OutlineNodeId {
     private final String id;
 
-    OutlineNodeId(String id) {
+    public OutlineNodeId(String id) {
         this.id = id;
     }
 
-    void toJson(JsonGenerator generator) throws IOException {
+    public void toJson(JsonGenerator generator) throws IOException {
         generator.writeString(id);
     }
 
