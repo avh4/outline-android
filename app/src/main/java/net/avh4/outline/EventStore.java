@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import net.avh4.Event;
 import net.avh4.F1;
 import net.avh4.json.JsonHelper;
 import org.pcollections.HashPMap;
@@ -21,7 +22,7 @@ class EventStore {
         this.context = context;
     }
 
-    void record(DataStore.Event e) {
+    void record(Event e) {
         String filename = Long.toString(System.currentTimeMillis());
         File file = new File(context.getFilesDir(), filename + ".json");
         try {
@@ -37,7 +38,7 @@ class EventStore {
         }
     }
 
-    void iterate(F1<DataStore.Event> process) throws IOException {
+    void iterate(F1<Event<Outline>> process) throws IOException {
         File[] files = context.getFilesDir().listFiles();
         long lastSeq = Long.MIN_VALUE;
         for (File file : files) {
@@ -47,7 +48,7 @@ class EventStore {
                     throw new IOException("Got files our of order: " + file.getName() + " after " + lastSeq);
                 }
                 lastSeq = seq;
-                DataStore.Event event = parseFile(file);
+                Event<Outline> event = parseFile(file);
                 process.call(event);
             } catch (IOException e) {
                 throw new IOException("Error parsing " + file.getAbsolutePath(), e);
@@ -55,21 +56,23 @@ class EventStore {
         }
     }
 
-    private DataStore.Event parseFile(File file) throws IOException {
+    private Event<Outline> parseFile(File file) throws IOException {
         JsonParser parser = jsonFactory.createParser(file);
         JsonHelper helper = new JsonHelper(parser);
 
-        DataStore.Event event = helper.getObject(new JsonHelper.ObjectCallback<DataStore.Event>() {
+        Event<Outline> event = helper.getObject(new JsonHelper.ObjectCallback<Event<Outline>>() {
             @Override
-            public DataStore.Event call(JsonHelper.ObjectContext context) throws IOException {
+            public Event<Outline> call(JsonHelper.ObjectContext context) throws IOException {
                 String type = context.getString("type");
 
-                HashPMap<String, JsonHelper.ValueCallback<? extends DataStore.Event>> typeMap =
-                        HashTreePMap.<String, JsonHelper.ValueCallback<? extends DataStore.Event>>empty()
-                                .plus(DataStore.Add.class.getCanonicalName(), DataStore.Add.fromJson)
-                                .plus(DataStore.Delete.class.getCanonicalName(), DataStore.Delete.fromJson);
+                HashPMap<String, JsonHelper.ValueCallback<? extends Event<Outline>>> typeMap =
+                        HashTreePMap.<String, JsonHelper.ValueCallback<? extends Event<Outline>>>empty()
+                                .plus("net.avh4.outline.DataStore.Add", Add.fromJson)
+                                .plus(Add.class.getCanonicalName(), Add.fromJson)
+                                .plus("net.avh4.outline.DataStore.Delete", Delete.fromJson)
+                                .plus(Delete.class.getCanonicalName(), Delete.fromJson);
 
-                JsonHelper.ValueCallback<? extends DataStore.Event> fromJson = typeMap.get(type);
+                JsonHelper.ValueCallback<? extends Event<Outline>> fromJson = typeMap.get(type);
                 if (fromJson == null) {
                     throw new IOException("Invalid event type: " + type);
                 }
