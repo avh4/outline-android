@@ -1,34 +1,34 @@
 package net.avh4.outline;
 
-import android.content.Context;
 import net.avh4.Event;
-import net.avh4.F1;
 import net.avh4.outline.events.Add;
 import net.avh4.outline.events.Delete;
 import rx.Observable;
+import rx.functions.Action1;
 import rx.subjects.ReplaySubject;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class DataStore {
+public class DataStore {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final ReplaySubject<Outline> outlineSubject;
+    private final EventStore eventStore;
     private Outline outline;
-    private EventStore eventStore;
 
-    DataStore() {
+    public DataStore(EventStore eventStore) {
         outline = Outline.empty();
         outlineSubject = ReplaySubject.createWithSize(1);
+        outlineSubject.onNext(outline);
+        this.eventStore = eventStore;
     }
 
-    void initialize(Context context) throws IOException {
+    public void initialize() throws IOException {
         if (initialized.getAndSet(true)) {
             return;
         }
-        eventStore = new EventStore(context);
-        eventStore.iterate(new F1<Event<Outline>>() {
+        eventStore.iterate(new Action1<Event<Outline>>() {
             @Override
             public void call(Event<Outline> event) {
                 outline = event.execute(outline);
@@ -37,7 +37,7 @@ class DataStore {
         outlineSubject.onNext(outline);
     }
 
-    private void processEvent(Event<Outline> e) {
+    public void processEvent(Event<Outline> e) {
         if (!initialized.get()) {
             throw new IllegalStateException("Not initialized");
         }
@@ -56,7 +56,7 @@ class DataStore {
         processEvent(e);
     }
 
-    Observable<Outline> getOutline() {
+    public Observable<Outline> getOutline() {
         return outlineSubject;
     }
 }

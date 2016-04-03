@@ -1,5 +1,6 @@
 package net.avh4.outline;
 
+import android.support.annotation.NonNull;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
@@ -37,11 +38,13 @@ public class Outline {
         return new Outline(root, newNodes);
     }
 
-    OutlineNode getRoot() {
+    @NonNull
+    public OutlineNode getRoot() {
         return nodes.get(root);
     }
 
-    OutlineNode getNode(OutlineNodeId id) {
+    @NonNull
+    public OutlineNode getNode(OutlineNodeId id) {
         OutlineNode outlineNode = nodes.get(id);
         if (outlineNode == null) {
             throw new IllegalArgumentException(this.toString() + " does not contain " + id.toString() + " (" + nodes.size() + " nodes)");

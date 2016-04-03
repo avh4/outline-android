@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import net.avh4.Event;
-import net.avh4.F1;
+import net.avh4.UniqueClock;
 import net.avh4.json.FromJsonObject;
 import net.avh4.json.FromJsonValue;
 import net.avh4.json.JsonObjectReader;
@@ -15,21 +15,26 @@ import net.avh4.outline.events.Add;
 import net.avh4.outline.events.Delete;
 import org.pcollections.HashPMap;
 import org.pcollections.HashTreePMap;
+import rx.functions.Action1;
 
 import java.io.File;
 import java.io.IOException;
 
-class EventStore {
+public class EventStore {
     private final Context context;
     private final JsonFactory jsonFactory = new JsonFactory();
+    private final UniqueClock uniqueClock = new UniqueClock();
 
     EventStore(Context context) {
         this.context = context;
     }
 
     void record(Event e) {
-        String filename = Long.toString(System.currentTimeMillis());
+        String filename = Long.toString(uniqueClock.get());
         File file = new File(context.getFilesDir(), filename + ".json");
+        if (file.exists()) {
+            throw new RuntimeException("event already exists!! " + file);
+        }
         try {
             JsonGenerator generator = jsonFactory.createGenerator(file, JsonEncoding.UTF8);
             generator.writeStartObject();
@@ -43,7 +48,7 @@ class EventStore {
         }
     }
 
-    void iterate(F1<Event<Outline>> process) throws IOException {
+    void iterate(Action1<Event<Outline>> process) throws IOException {
         File[] files = context.getFilesDir().listFiles();
         long lastSeq = Long.MIN_VALUE;
         for (File file : files) {

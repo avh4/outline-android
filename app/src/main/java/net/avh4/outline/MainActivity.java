@@ -1,7 +1,11 @@
 package net.avh4.outline;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -18,49 +22,55 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.nononsenseapps.filepicker.FilePickerActivity;
 import net.avh4.android.ThrowableDialog;
-import net.avh4.rx.History;
-import rx.Observable;
+import net.avh4.outline.ui.actions.NotImplementedAction;
+import org.pcollections.HashTreePMap;
+import org.pcollections.PMap;
 import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.functions.Func2;
 
 import java.io.IOException;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private final DataStore store = new DataStore();
-    private final Generator<OutlineNodeId> idGenerator = new IdGenerator(UUID.randomUUID().toString());
+    private static final int RESULT_CODE_FILE = 0x9247;
+    private DataStore dataStore;
+    private MainUi ui;
 
-    private final Observable<OutlineView> outlineView;
-    private final History<OutlineNode> history = new History<>();
-    private final Observable<String> title;
+    private PMap<Integer, AppAction> menuActions;
+    private AppAction.OnError errorHandler = new AppAction.OnError() {
+        @Override
+        public void onError(Throwable err) {
+            ThrowableDialog.show(MainActivity.this, err);
+        }
+    };
 
     public MainActivity() {
-        outlineView = Observable.combineLatest(store.getOutline(), history.getCurrent(),
-                new Func2<Outline, OutlineNode, OutlineView>() {
-                    @Override
-                    public OutlineView call(Outline outline, OutlineNode focus) {
-                        return new OutlineView(outline, focus.getId());
-                    }
-                });
-        title = Observable.concat(Observable.<String>just(null), history.getCurrent().map(new Func1<OutlineNode, String>() {
-            @Override
-            public String call(OutlineNode node) {
-                if (node.isRootNode()) {
-                    return null;
-                } else {
-                    return node.getText();
-                }
-            }
-        }));
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        EventStore eventStore = new EventStore(getApplicationContext());
+        dataStore = new DataStore(eventStore);
+        ui = new MainUi(dataStore);
+        menuActions = HashTreePMap.<Integer, AppAction>empty()
+                .plus(R.id.action_import,
+                        new AppAction() {
+                            @Override
+                            public void run(OnError e) {
+                                Intent i = new Intent(MainActivity.this, FilePickerActivity.class);
+                                i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
+                                i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
+                                i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
+                                i.putExtra(FilePickerActivity.EXTRA_START_PATH, Environment.getExternalStorageDirectory().getPath());
+
+                                startActivityForResult(i, RESULT_CODE_FILE);
+                            }
+                        })
+                .plus(R.id.action_settings, new NotImplementedAction(this));
 
         final MaterialDialog loadingDialog = new MaterialDialog.Builder(this)
                 .content(R.string.dialog_loading_initial)
@@ -72,7 +82,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             protected IOException doInBackground(Void... params) {
                 try {
-                    store.initialize(MainActivity.this);
+                    dataStore.initialize();
                     return null;
                 } catch (IOException e) {
                     return e;
@@ -90,7 +100,7 @@ public class MainActivity extends AppCompatActivity
             }
         }.execute();
 
-        title.subscribe(new Action1<String>() {
+        ui.getTitle().subscribe(new Action1<String>() {
             @Override
             public void call(String title) {
                 if (title == null) {
@@ -112,7 +122,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                history.getCurrent().first().subscribe(new Action1<OutlineNode>() {
+                ui.getCurrent().first().subscribe(new Action1<OutlineNode>() {
                     @Override
                     public void call(OutlineNode parent) {
                         showAddDialog(parent.getId());
@@ -134,13 +144,13 @@ public class MainActivity extends AppCompatActivity
 
         ListView listView = (ListView) findViewById(R.id.list);
         assert listView != null;
-        final OutlineAdapter adapter = new OutlineAdapter(this, outlineView);
+        final OutlineAdapter adapter = new OutlineAdapter(this, ui.getOutlineView());
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 OutlineNode node = adapter.getItem(position);
-                history.push(node);
+                ui.enter(node);
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -152,17 +162,9 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        Observable<Outline> initialFocus = store.getOutline().first();
-        initialFocus.subscribe(new Action1<Outline>() {
-            @Override
-            public void call(Outline outline) {
-                history.push(outline.getRoot());
-            }
-        });
-
         final TextView backLabel = (TextView) findViewById(R.id.back_label);
         assert backLabel != null;
-        history.getParent().subscribe(new Action1<OutlineNode>() {
+        ui.getCurrentParent().subscribe(new Action1<OutlineNode>() {
             @Override
             public void call(OutlineNode parent) {
                 if (parent == null) {
@@ -176,7 +178,7 @@ public class MainActivity extends AppCompatActivity
         backLabel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                history.pop();
+                ui.back();
             }
         });
     }
@@ -187,7 +189,7 @@ public class MainActivity extends AppCompatActivity
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                        store.deleteItem(node);
+                        dataStore.deleteItem(node);
                     }
                 })
                 .show();
@@ -199,8 +201,7 @@ public class MainActivity extends AppCompatActivity
                 .input(null, null, new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                        OutlineNodeId itemId = idGenerator.next();
-                        store.addItem(parent, itemId, input.toString());
+                        ui.addAction(parent, input.toString()).run(errorHandler);
                     }
                 })
                 .canceledOnTouchOutside(false)
@@ -233,12 +234,13 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        AppAction action = menuActions.get(id);
+        if (action != null) {
+            action.run(errorHandler);
             return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -265,5 +267,20 @@ public class MainActivity extends AppCompatActivity
         assert drawer != null;
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == RESULT_CODE_FILE && resultCode == Activity.RESULT_OK) {
+            assert data.getBooleanExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false) == false;
+            Uri uri = data.getData();
+            if (uri.getScheme().equals("file")) {
+                ui.importAction(uri.getPath()).run(errorHandler);
+            } else {
+                errorHandler.onError(new RuntimeException("Expected a file Uri from the file picker, but got: " + uri));
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }

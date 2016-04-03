@@ -1,13 +1,14 @@
 package net.avh4.outline;
 
+import android.support.annotation.NonNull;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
 
 public class OutlineNodeId {
-    private final String id;
+    private final @NonNull String id;
 
-    public OutlineNodeId(String id) {
+    public OutlineNodeId(@NonNull String id) {
         this.id = id;
     }
 
@@ -31,12 +32,12 @@ public class OutlineNodeId {
 
         OutlineNodeId that = (OutlineNodeId) o;
 
-        return id != null ? id.equals(that.id) : that.id == null;
+        return id.equals(that.id);
 
     }
 
     @Override
     public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+        return id.hashCode();
     }
 }

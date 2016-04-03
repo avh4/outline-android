@@ -3,7 +3,7 @@ package net.avh4.outline;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
-class OutlineNode {
+public class OutlineNode {
     private final OutlineNodeId id;
     private final String text;
     private final PVector<OutlineNodeId> children;
@@ -30,7 +30,7 @@ class OutlineNode {
         return text;
     }
 
-    PVector<OutlineNodeId> getChildren() {
+    public PVector<OutlineNodeId> getChildren() {
         return children;
     }
 
