@@ -10,6 +10,8 @@
 
 ## Finished
 
+  - 2016-04-03 I can unmark items as completed
+  - 2016-04-03 I can mark items as completed
   - 2016-04-03 I can import a list of items (Bonsai CSV format)
   - 2016-03-21 I can add items as children
   - 2016-03-20 Items persist on the device

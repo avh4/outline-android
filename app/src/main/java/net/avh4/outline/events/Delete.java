@@ -1,5 +1,6 @@
 package net.avh4.outline.events;
 
+import android.support.annotation.NonNull;
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.avh4.Event;
 import net.avh4.json.FromJsonValue;
@@ -24,8 +25,9 @@ public class Delete implements Event<Outline> {
         this.node = node;
     }
 
+    @NonNull
     @Override
-    public Outline execute(Outline outline) {
+    public Outline execute(@NonNull Outline outline) {
         return outline.deleteNode(node);
     }
 

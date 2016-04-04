@@ -23,6 +23,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.nononsenseapps.filepicker.FilePickerActivity;
+import net.avh4.android.OnItemCheckedChangedListener;
 import net.avh4.android.ThrowableDialog;
 import net.avh4.outline.ui.actions.NotImplementedAction;
 import org.pcollections.HashTreePMap;
@@ -145,6 +146,17 @@ public class MainActivity extends AppCompatActivity
         ListView listView = (ListView) findViewById(R.id.list);
         assert listView != null;
         final OutlineAdapter adapter = new OutlineAdapter(this, ui.getOutlineView());
+        adapter.setOnItemCheckedChangedListener(new OnItemCheckedChangedListener() {
+            @Override
+            public void onItemCheckedChanged(int position, boolean isChecked) {
+                OutlineNode node = adapter.getItem(position);
+                if (isChecked) {
+                    ui.completeAction(node.getId()).run(errorHandler);
+                } else {
+                    ui.uncompleteAction(node.getId()).run(errorHandler);
+                }
+            }
+        });
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

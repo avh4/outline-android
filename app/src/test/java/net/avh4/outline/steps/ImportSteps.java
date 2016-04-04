@@ -1,4 +1,4 @@
-package net.avh4.outline;
+package net.avh4.outline.steps;
 
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -7,11 +7,15 @@ import cucumber.runtime.java.StepDefAnnotation;
 import net.avh4.outline.domain.FeatureTestPerson;
 
 @StepDefAnnotation
-public class OutlineSteps {
+public class ImportSteps {
 
-    private final FeatureTestPerson aaron = new FeatureTestPerson();
+    private final FeatureTestPerson aaron;
     private String he;
     private String aaronsCsvFile;
+
+    public ImportSteps(FeatureTestPerson aaron) {
+        this.aaron = aaron;
+    }
 
     @Given("^Aaron has a CSV file for his existing outline$")
     public void aaron_has_a_CSV_file_for_his_existing_outline() throws Throwable {
@@ -46,6 +50,6 @@ public class OutlineSteps {
         aaron.assertHasItem("Import from CSV", "By time", "This week");
         aaron.assertHasItem("Import from CSV", "By time", "This week", "Clean up car");
         aaron.assertDoesntHaveItem("Import from CSV", "By time", "This week", "Clean up car (DONE)");
-        aaron.assertSeesItem("Import from CSV");
+        aaron.app.assertSeesItem("Import from CSV");
     }
 }

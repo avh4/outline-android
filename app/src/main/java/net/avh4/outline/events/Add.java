@@ -38,8 +38,9 @@ public class Add implements Event<Outline> {
         this.value = value;
     }
 
+    @NonNull
     @Override
-    public Outline execute(Outline outline) {
+    public Outline execute(@NonNull Outline outline) {
         return outline.addChild(parent, id, value);
     }
 

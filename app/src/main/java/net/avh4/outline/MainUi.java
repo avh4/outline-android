@@ -1,6 +1,8 @@
 package net.avh4.outline;
 
 import net.avh4.outline.android.AndroidFilesystem;
+import net.avh4.outline.events.CompleteItem;
+import net.avh4.outline.events.UncompleteItem;
 import net.avh4.outline.features.importing.ImportAction;
 import net.avh4.rx.History;
 import rx.Observable;
@@ -81,6 +83,24 @@ public class MainUi {
             public void run(OnError e) {
                 OutlineNodeId itemId = idGenerator.next();
                 dataStore.addItem(parent, itemId, text);
+            }
+        };
+    }
+
+    public AppAction completeAction(final OutlineNodeId itemId) {
+        return new AppAction() {
+            @Override
+            public void run(OnError e) {
+                dataStore.processEvent(new CompleteItem(itemId));
+            }
+        };
+    }
+
+    public AppAction uncompleteAction(final OutlineNodeId itemId) {
+        return new AppAction() {
+            @Override
+            public void run(OnError e) {
+                dataStore.processEvent(new UncompleteItem(itemId));
             }
         };
     }

@@ -3,6 +3,7 @@ package net.avh4.outline;
 import android.support.annotation.NonNull;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
+import rx.functions.Func1;
 
 import java.util.Map;
 
@@ -50,5 +51,12 @@ public class Outline {
             throw new IllegalArgumentException(this.toString() + " does not contain " + id.toString() + " (" + nodes.size() + " nodes)");
         }
         return outlineNode;
+    }
+
+    @NonNull
+    public Outline updateChild(OutlineNodeId itemId, Func1<OutlineNode, OutlineNode> transform) {
+        PMap<OutlineNodeId, OutlineNode> newNodes = nodes
+                .plus(itemId, transform.call(getNode(itemId)));
+        return new Outline(root, newNodes);
     }
 }

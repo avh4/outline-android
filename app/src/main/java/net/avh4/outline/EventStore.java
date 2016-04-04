@@ -6,19 +6,23 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import net.avh4.Event;
+import net.avh4.ISO8601;
 import net.avh4.UniqueClock;
 import net.avh4.json.FromJsonObject;
 import net.avh4.json.FromJsonValue;
 import net.avh4.json.JsonObjectReader;
 import net.avh4.json.JsonValueReader;
 import net.avh4.outline.events.Add;
+import net.avh4.outline.events.CompleteItem;
 import net.avh4.outline.events.Delete;
+import net.avh4.outline.events.UncompleteItem;
 import org.pcollections.HashPMap;
 import org.pcollections.HashTreePMap;
 import rx.functions.Action1;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 
 public class EventStore {
     private final Context context;
@@ -38,6 +42,7 @@ public class EventStore {
         try {
             JsonGenerator generator = jsonFactory.createGenerator(file, JsonEncoding.UTF8);
             generator.writeStartObject();
+            generator.writeStringField("at", ISO8601.format(new Date()));
             generator.writeStringField("type", e.eventType());
             generator.writeFieldName("data");
             e.toJson(generator);
@@ -73,6 +78,7 @@ public class EventStore {
         Event<Outline> event = helper.getObject(new FromJsonObject<Event<Outline>>() {
             @Override
             public Event<Outline> call(JsonObjectReader json) throws IOException {
+                json.getString("at");
                 String type = json.getString("type");
 
                 HashPMap<String, FromJsonValue<? extends Event<Outline>>> typeMap =
@@ -82,7 +88,9 @@ public class EventStore {
                                 .plus(Add.eventType, Add.fromJson)
                                 .plus("net.avh4.outline.DataStore.Delete", Delete.fromJson)
                                 .plus("net.avh4.outline.Delete", Delete.fromJson)
-                                .plus(Delete.eventType, Delete.fromJson);
+                                .plus(Delete.eventType, Delete.fromJson)
+                                .plus(CompleteItem.eventType, CompleteItem.fromJson)
+                                .plus(UncompleteItem.eventType, UncompleteItem.fromJson);
 
                 FromJsonValue<? extends Event<Outline>> fromJson = typeMap.get(type);
                 if (fromJson == null) {
