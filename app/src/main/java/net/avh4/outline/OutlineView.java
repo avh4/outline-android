@@ -25,4 +25,15 @@ public class OutlineView {
     OutlineNode getNode() {
         return focusNode;
     }
+
+    int getDisplayCount(OutlineNode item) {
+        int count = 0;
+        for (OutlineNodeId childId : item.getChildren()) {
+            OutlineNode child = outline.getNode(childId);
+            if (!child.isCompleted()) {
+                count++;
+            }
+        }
+        return count;
+    }
 }

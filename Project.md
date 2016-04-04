@@ -10,6 +10,7 @@
 
 ## Finished
 
+  - 2016-04-03 I can see how many children in an item
   - 2016-04-03 I can unmark items as completed
   - 2016-04-03 I can mark items as completed
   - 2016-04-03 I can import a list of items (Bonsai CSV format)

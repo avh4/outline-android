@@ -46,7 +46,7 @@ class OutlineAdapter extends BaseAdapter {
         textView.setPaintFlags(flags);
     }
 
-    public void setOnItemCheckedChangedListener(OnItemCheckedChangedListener onItemCheckedChangedListener) {
+    void setOnItemCheckedChangedListener(OnItemCheckedChangedListener onItemCheckedChangedListener) {
         this.onItemCheckedChangedListener = onItemCheckedChangedListener;
     }
 
@@ -82,17 +82,30 @@ class OutlineAdapter extends BaseAdapter {
 
         OutlineNode item = getItem(position);
         if (item != null) {
-            TextView textView = (TextView) view.findViewById(android.R.id.text1);
-            textView.setText(item.getText());
-            setStrikethrough(textView, item.isCompleted());
+            TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+            TextView text2 = (TextView) view.findViewById(android.R.id.text2);
             CheckBox checkBox = (CheckBox) view.findViewById(android.R.id.checkbox);
-            checkBox.setChecked(item.isCompleted());
-            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    onItemCheckedChangedListener.onItemCheckedChanged(position, isChecked);
-                }
-            });
+
+            text1.setText(item.getText());
+            setStrikethrough(text1, item.isCompleted());
+
+            int displayCount = current.getDisplayCount(item);
+            if (displayCount > 0) {
+                text2.setVisibility(View.VISIBLE);
+                text2.setText(context.getString(R.string.item_child_count, displayCount));
+                checkBox.setVisibility(View.INVISIBLE);
+            } else {
+                text2.setVisibility(View.GONE);
+                text2.setText("");
+                checkBox.setVisibility(View.VISIBLE);
+                checkBox.setChecked(item.isCompleted());
+                checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        onItemCheckedChangedListener.onItemCheckedChanged(position, isChecked);
+                    }
+                });
+            }
         }
         return view;
     }

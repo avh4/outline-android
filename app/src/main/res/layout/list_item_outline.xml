@@ -9,7 +9,7 @@
     <TextView
         android:id="@android:id/text1"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:minHeight="48dp"
@@ -18,12 +18,27 @@
         android:textSize="16sp"
         tools:text="Walk the dog"/>
 
-    <CheckBox
-        android:id="@android:id/checkbox"
+    <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:focusable="false"
         android:paddingRight="16dp"
-        />
+        >
+
+        <TextView
+            android:id="@android:id/text2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="13sp"
+            tools:text="(3)"
+            />
+
+        <CheckBox
+            android:id="@android:id/checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:focusable="false"
+            />
+    </FrameLayout>
 
 </LinearLayout>
