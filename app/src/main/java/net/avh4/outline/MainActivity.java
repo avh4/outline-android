@@ -193,24 +193,6 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> actionNames = new ArrayList<>();
         final ArrayList<Runnable> actionCallbacks = new ArrayList<>();
 
-        actionNames.add(getString(R.string.action_item_delete));
-        actionCallbacks.add(new Runnable() {
-            @Override
-            public void run() {
-                dataStore.deleteItem(child.getId());
-            }
-        });
-
-        if (grandparent != null) {
-            actionNames.add(getString(R.string.action_item_move_up, grandparent.getText()));
-            actionCallbacks.add(new Runnable() {
-                @Override
-                public void run() {
-                    dataStore.processEvent(new Move(child.getId(), parent.getId(), grandparent.getId()));
-                }
-            });
-        }
-
         if (parent.getChildren().size() > 1) {
             actionNames.add(getString(R.string.action_item_move_into));
             actionCallbacks.add(new Runnable() {
@@ -243,6 +225,24 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        if (grandparent != null) {
+            actionNames.add(getString(R.string.action_item_move_up, grandparent.getText()));
+            actionCallbacks.add(new Runnable() {
+                @Override
+                public void run() {
+                    dataStore.processEvent(new Move(child.getId(), parent.getId(), grandparent.getId()));
+                }
+            });
+        }
+
+        actionNames.add(getString(R.string.action_item_delete));
+        actionCallbacks.add(new Runnable() {
+            @Override
+            public void run() {
+                dataStore.deleteItem(child.getId());
+            }
+        });
 
         new MaterialDialog.Builder(MainActivity.this)
                 .items(actionNames)
