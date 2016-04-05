@@ -28,7 +28,7 @@ import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 import rx.Observable;
 import rx.functions.Action1;
-import rx.functions.Func2;
+import rx.functions.Func3;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -156,10 +156,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
                 final OutlineNode node = adapter.getItem(position);
-                Observable.zip(ui.getCurrent().first(), ui.getCurrentParent().first(), new Func2<OutlineNode, OutlineNode, Pair<OutlineNode, OutlineNode>>() {
+                Observable.zip(ui.getCurrent().first(), ui.getCurrentParent().first(), ui.getOutlineView(), new Func3<OutlineNode, OutlineNode, OutlineView, Pair<OutlineNode, OutlineNode>>() {
                     @Override
-                    public Pair<OutlineNode, OutlineNode> call(OutlineNode current, OutlineNode parent) {
-                        return new Pair<>(current, parent);
+                    public Pair<OutlineNode, OutlineNode> call(OutlineNode current, OutlineNode parent, OutlineView outlineView) {
+                        return new Pair<>(outlineView.getOutline().getNode(current.getId()), parent == null ? null : outlineView.getOutline().getNode(parent.getId()));
                     }
                 }).subscribe(new Action1<Pair<OutlineNode, OutlineNode>>() {
                     @Override
@@ -207,6 +207,39 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     dataStore.processEvent(new Move(child.getId(), parent.getId(), grandparent.getId()));
+                }
+            });
+        }
+
+        if (parent.getChildren().size() > 1) {
+            actionNames.add(getString(R.string.action_item_move_into));
+            actionCallbacks.add(new Runnable() {
+                @Override
+                public void run() {
+                    ui.getOutlineView().first().subscribe(new Action1<OutlineView>() {
+                        @Override
+                        public void call(OutlineView outlineView) {
+                            final ArrayList<String> choiceNames = new ArrayList<>();
+                            final ArrayList<OutlineNodeId> choiceIds = new ArrayList<>();
+                            Outline outline = outlineView.getOutline();
+                            for (OutlineNodeId childId : parent.getChildren()) {
+                                if (childId.equals(child.getId())) continue;
+                                OutlineNode child = outline.getNode(childId);
+                                choiceNames.add(child.getText());
+                                choiceIds.add(child.getId());
+                            }
+
+                            new MaterialDialog.Builder(MainActivity.this)
+                                    .items(choiceNames)
+                                    .itemsCallback(new MaterialDialog.ListCallback() {
+                                        @Override
+                                        public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
+                                            OutlineNodeId to = choiceIds.get(which);
+                                            dataStore.processEvent(new Move(child.getId(), parent.getId(), to));
+                                        }
+                                    }).show();
+                        }
+                    });
                 }
             });
         }

@@ -1,7 +1,6 @@
 
 ## Backlog
 
-  - I can move an item into an existing child
   - I can reorder items
   - I can import a list of items (Markdown list)
   - I can rename items
@@ -9,6 +8,7 @@
 
 ## Finished
 
+  - 2016-04-04 I can move an item into an existing child
   - 2016-04-04 I can move items up a level
   - 2016-04-03 I can see how many children in an item
   - 2016-04-03 I can unmark items as completed

@@ -36,4 +36,8 @@ public class OutlineView {
         }
         return count;
     }
+
+    public Outline getOutline() {
+        return outline;
+    }
 }
