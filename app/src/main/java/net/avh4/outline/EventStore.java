@@ -12,10 +12,7 @@ import net.avh4.json.FromJsonObject;
 import net.avh4.json.FromJsonValue;
 import net.avh4.json.JsonObjectReader;
 import net.avh4.json.JsonValueReader;
-import net.avh4.outline.events.Add;
-import net.avh4.outline.events.CompleteItem;
-import net.avh4.outline.events.Delete;
-import net.avh4.outline.events.UncompleteItem;
+import net.avh4.outline.events.*;
 import org.pcollections.HashPMap;
 import org.pcollections.HashTreePMap;
 import rx.functions.Action1;
@@ -90,7 +87,8 @@ public class EventStore {
                                 .plus("net.avh4.outline.Delete", Delete.fromJson)
                                 .plus(Delete.eventType, Delete.fromJson)
                                 .plus(CompleteItem.eventType, CompleteItem.fromJson)
-                                .plus(UncompleteItem.eventType, UncompleteItem.fromJson);
+                                .plus(UncompleteItem.eventType, UncompleteItem.fromJson)
+                                .plus(Move.eventType, Move.fromJson);
 
                 FromJsonValue<? extends Event<Outline>> fromJson = typeMap.get(type);
                 if (fromJson == null) {

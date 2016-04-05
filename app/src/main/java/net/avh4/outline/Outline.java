@@ -59,4 +59,14 @@ public class Outline {
                 .plus(itemId, transform.call(getNode(itemId)));
         return new Outline(root, newNodes);
     }
+
+    @NonNull
+    public Outline move(@NonNull OutlineNodeId id, @NonNull OutlineNodeId from, @NonNull OutlineNodeId to) {
+        OutlineNode newTo = nodes.get(to).addChild(id);
+        OutlineNode newFrom = nodes.get(from).removeChild(id);
+        PMap<OutlineNodeId, OutlineNode> newNodes = nodes
+                .plus(from, newFrom)
+                .plus(to, newTo);
+        return new Outline(root, newNodes);
+    }
 }

@@ -7,10 +7,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,12 +22,16 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import net.avh4.android.OnItemCheckedChangedListener;
 import net.avh4.android.ThrowableDialog;
+import net.avh4.outline.events.Move;
 import net.avh4.outline.ui.actions.NotImplementedAction;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
+import rx.Observable;
 import rx.functions.Action1;
+import rx.functions.Func2;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -149,8 +155,18 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-                OutlineNode node = adapter.getItem(position);
-                showItemActionDialog(node.getId());
+                final OutlineNode node = adapter.getItem(position);
+                Observable.zip(ui.getCurrent().first(), ui.getCurrentParent().first(), new Func2<OutlineNode, OutlineNode, Pair<OutlineNode, OutlineNode>>() {
+                    @Override
+                    public Pair<OutlineNode, OutlineNode> call(OutlineNode current, OutlineNode parent) {
+                        return new Pair<>(current, parent);
+                    }
+                }).subscribe(new Action1<Pair<OutlineNode, OutlineNode>>() {
+                    @Override
+                    public void call(Pair<OutlineNode, OutlineNode> pair) {
+                        showItemActionDialog(node, pair.first, pair.second);
+                    }
+                });
                 return true;
             }
         });
@@ -173,13 +189,34 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showItemActionDialog(final OutlineNodeId node) {
+    private void showItemActionDialog(final OutlineNode child, final OutlineNode parent, @Nullable final OutlineNode grandparent) {
+        ArrayList<String> actionNames = new ArrayList<>();
+        final ArrayList<Runnable> actionCallbacks = new ArrayList<>();
+
+        actionNames.add(getString(R.string.action_item_delete));
+        actionCallbacks.add(new Runnable() {
+            @Override
+            public void run() {
+                dataStore.deleteItem(child.getId());
+            }
+        });
+
+        if (grandparent != null) {
+            actionNames.add(getString(R.string.action_item_move_up, grandparent.getText()));
+            actionCallbacks.add(new Runnable() {
+                @Override
+                public void run() {
+                    dataStore.processEvent(new Move(child.getId(), parent.getId(), grandparent.getId()));
+                }
+            });
+        }
+
         new MaterialDialog.Builder(MainActivity.this)
-                .items(getString(R.string.action_item_delete))
+                .items(actionNames)
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                        dataStore.deleteItem(node);
+                        actionCallbacks.get(which).run();
                     }
                 })
                 .show();

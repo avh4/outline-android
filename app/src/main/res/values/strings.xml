@@ -10,4 +10,5 @@
     <string name="dialog_error_title">Unexpected error</string>
     <string name="action_import">Import…</string>
     <string name="item_child_count">%1$d</string>
+    <string name="action_item_move_up">Move up to %1$s</string>
 </resources>
