@@ -1,4 +1,4 @@
-package net.avh4.net.avh4.csv;
+package net.avh4.csv;
 
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;

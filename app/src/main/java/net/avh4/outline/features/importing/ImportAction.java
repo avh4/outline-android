@@ -1,6 +1,6 @@
 package net.avh4.outline.features.importing;
 
-import net.avh4.net.avh4.csv.CsvObservable;
+import net.avh4.csv.CsvObservable;
 import net.avh4.outline.*;
 import net.avh4.outline.events.Add;
 import org.apache.commons.csv.CSVRecord;
