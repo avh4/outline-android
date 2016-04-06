@@ -7,14 +7,13 @@ import net.avh4.outline.features.importing.ImportAction;
 import net.avh4.rx.History;
 import rx.Observable;
 import rx.functions.Action1;
-import rx.functions.Func1;
 import rx.functions.Func2;
 
 import java.util.UUID;
 
 public class MainUi {
     private final DataStore dataStore;
-    private final History<OutlineNode> history = new History<>();
+    private final History<OutlineNodeId> history = new History<>();
     private final Generator<OutlineNodeId> idGenerator = new IdGenerator(UUID.randomUUID().toString());
     private final Filesystem filesystem = new AndroidFilesystem();
     private final Observable<OutlineView> outlineView;
@@ -23,28 +22,29 @@ public class MainUi {
     public MainUi(DataStore dataStore) {
         this.dataStore = dataStore;
         outlineView = Observable.combineLatest(dataStore.getOutline(), history.getCurrent(),
-                new Func2<Outline, OutlineNode, OutlineView>() {
+                new Func2<Outline, OutlineNodeId, OutlineView>() {
                     @Override
-                    public OutlineView call(Outline outline, OutlineNode focus) {
-                        return new OutlineView(outline, focus.getId());
+                    public OutlineView call(Outline outline, OutlineNodeId focus) {
+                        return new OutlineView(outline, focus);
                     }
                 });
-        title = Observable.concat(Observable.<String>just(null), history.getCurrent().map(new Func1<OutlineNode, String>() {
-            @Override
-            public String call(OutlineNode node) {
-                if (node.isRootNode()) {
-                    return null;
-                } else {
-                    return node.getText();
-                }
-            }
-        }));
+        title = Observable.concat(Observable.<String>just(null),
+                Observable.combineLatest(dataStore.getOutline(), history.getCurrent(), new Func2<Outline, OutlineNodeId, String>() {
+                    @Override
+                    public String call(Outline outline, OutlineNodeId node) {
+                        if (node.isRootNode()) {
+                            return null;
+                        } else {
+                            return outline.getNode(node).getText();
+                        }
+                    }
+                }));
 
         Observable<Outline> initialFocus = dataStore.getOutline().first();
         initialFocus.subscribe(new Action1<Outline>() {
             @Override
             public void call(Outline outline) {
-                history.push(outline.getRoot());
+                history.push(outline.getRoot().getId());
             }
         });
     }
@@ -53,7 +53,7 @@ public class MainUi {
         return title;
     }
 
-    public Observable<OutlineNode> getCurrent() {
+    public Observable<OutlineNodeId> getCurrent() {
         return history.getCurrent();
     }
 
@@ -61,7 +61,7 @@ public class MainUi {
         return outlineView;
     }
 
-    public void enter(OutlineNode node) {
+    public void enter(OutlineNodeId node) {
         history.push(node);
     }
 
@@ -69,7 +69,7 @@ public class MainUi {
         history.pop();
     }
 
-    public Observable<OutlineNode> getCurrentParent() {
+    public Observable<OutlineNodeId> getCurrentParent() {
         return history.getParent();
     }
 

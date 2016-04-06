@@ -121,10 +121,10 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ui.getCurrent().first().subscribe(new Action1<OutlineNode>() {
+                ui.getCurrent().first().subscribe(new Action1<OutlineNodeId>() {
                     @Override
-                    public void call(OutlineNode parent) {
-                        showAddDialog(parent.getId());
+                    public void call(OutlineNodeId parent) {
+                        showAddDialog(parent);
                     }
                 });
             }
@@ -149,17 +149,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 OutlineNode node = adapter.getItem(position);
-                ui.enter(node);
+                ui.enter(node.getId());
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
                 final OutlineNode node = adapter.getItem(position);
-                Observable.zip(ui.getCurrent().first(), ui.getCurrentParent().first(), ui.getOutlineView(), new Func3<OutlineNode, OutlineNode, OutlineView, Pair<OutlineNode, OutlineNode>>() {
+                Observable.zip(ui.getCurrent().first(), ui.getCurrentParent().first(), ui.getOutlineView(), new Func3<OutlineNodeId, OutlineNodeId, OutlineView, Pair<OutlineNode, OutlineNode>>() {
                     @Override
-                    public Pair<OutlineNode, OutlineNode> call(OutlineNode current, OutlineNode parent, OutlineView outlineView) {
-                        return new Pair<>(outlineView.getOutline().getNode(current.getId()), parent == null ? null : outlineView.getOutline().getNode(parent.getId()));
+                    public Pair<OutlineNode, OutlineNode> call(OutlineNodeId current, OutlineNodeId parent, OutlineView outlineView) {
+                        return new Pair<>(outlineView.getOutline().getNode(current), parent == null ? null : outlineView.getOutline().getNode(parent));
                     }
                 }).subscribe(new Action1<Pair<OutlineNode, OutlineNode>>() {
                     @Override
@@ -171,9 +171,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ui.getCurrentParent().subscribe(new Action1<OutlineNode>() {
+        ui.getCurrentParent().subscribe(new Action1<OutlineNodeId>() {
             @Override
-            public void call(OutlineNode parent) {
+            public void call(OutlineNodeId parent) {
                 if (parent == null) {
                     toolbar.setNavigationIcon(null);
                 } else {
