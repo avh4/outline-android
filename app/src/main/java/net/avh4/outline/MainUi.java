@@ -7,7 +7,6 @@ import net.avh4.outline.features.importing.ImportAction;
 import net.avh4.rx.PathHistory;
 import rx.Observable;
 import rx.functions.Action1;
-import rx.functions.Func1;
 import rx.functions.Func2;
 
 import java.util.UUID;
@@ -26,7 +25,7 @@ public class MainUi {
                 new Func2<Outline, PathHistory.HistoryFrame<OutlineNodeId>, OutlineView>() {
                     @Override
                     public OutlineView call(Outline outline, PathHistory.HistoryFrame<OutlineNodeId> history) {
-                        return new OutlineView(outline, history.getCurrent());
+                        return new OutlineView(outline, history.getCurrent(), history.getParent());
                     }
                 });
         title = Observable.concat(Observable.<String>just(null),
@@ -56,37 +55,19 @@ public class MainUi {
         return title;
     }
 
-    public Observable<OutlineNodeId> getCurrent() {
-        return pathHistory.getCurrent().map(new Func1<PathHistory.HistoryFrame<OutlineNodeId>, OutlineNodeId>() {
-            @Override
-            public OutlineNodeId call(PathHistory.HistoryFrame<OutlineNodeId> history) {
-                return history.getCurrent();
-            }
-        });
-    }
-
     public Observable<OutlineView> getOutlineView() {
         return outlineView;
     }
 
-    public void enter(OutlineNodeId node) {
+    void enter(OutlineNodeId node) {
         pathHistory.push(node);
     }
 
-    public void back() {
+    void back() {
         pathHistory.pop();
     }
 
-    public Observable<OutlineNodeId> getCurrentParent() {
-        return pathHistory.getCurrent().map(new Func1<PathHistory.HistoryFrame<OutlineNodeId>, OutlineNodeId>() {
-            @Override
-            public OutlineNodeId call(PathHistory.HistoryFrame<OutlineNodeId> history) {
-                return history.getParent();
-            }
-        });
-    }
-
-    public AppAction importAction(String filename) {
+    AppAction importAction(String filename) {
         return new ImportAction(dataStore, idGenerator, filesystem, filename);
     }
 
@@ -109,7 +90,7 @@ public class MainUi {
         };
     }
 
-    public AppAction uncompleteAction(final OutlineNodeId itemId) {
+    AppAction uncompleteAction(final OutlineNodeId itemId) {
         return new AppAction() {
             @Override
             public void run(OnError e) {

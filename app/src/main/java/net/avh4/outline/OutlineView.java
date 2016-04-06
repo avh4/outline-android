@@ -4,13 +4,15 @@ import org.pcollections.PVector;
 
 public class OutlineView {
     private final Outline outline;
-    private final OutlineNode focusNode;
+    private final OutlineNode parent;
+    private final OutlineNode current;
     private final PVector<OutlineNodeId> children;
 
-    OutlineView(Outline outline, OutlineNodeId focus) {
+    OutlineView(Outline outline, OutlineNodeId current, OutlineNodeId parent) {
         this.outline = outline;
-        focusNode = outline.getNode(focus);
-        children = focusNode.getChildren();
+        this.parent = parent == null ? null : outline.getNode(parent);
+        this.current = outline.getNode(current);
+        children = this.current.getChildren();
     }
 
     public int getNumberOfChildren() {
@@ -23,7 +25,7 @@ public class OutlineView {
     }
 
     OutlineNode getNode() {
-        return focusNode;
+        return current;
     }
 
     int getDisplayCount(OutlineNode item) {
@@ -39,5 +41,9 @@ public class OutlineView {
 
     public Outline getOutline() {
         return outline;
+    }
+
+    public OutlineNode getParent() {
+        return parent;
     }
 }
