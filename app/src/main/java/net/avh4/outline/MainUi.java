@@ -4,16 +4,17 @@ import net.avh4.outline.android.AndroidFilesystem;
 import net.avh4.outline.events.CompleteItem;
 import net.avh4.outline.events.UncompleteItem;
 import net.avh4.outline.features.importing.ImportAction;
-import net.avh4.rx.History;
+import net.avh4.rx.PathHistory;
 import rx.Observable;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.functions.Func2;
 
 import java.util.UUID;
 
 public class MainUi {
     private final DataStore dataStore;
-    private final History<OutlineNodeId> history = new History<>();
+    private final PathHistory<OutlineNodeId> pathHistory = new PathHistory<>();
     private final Generator<OutlineNodeId> idGenerator = new IdGenerator(UUID.randomUUID().toString());
     private final Filesystem filesystem = new AndroidFilesystem();
     private final Observable<OutlineView> outlineView;
@@ -21,30 +22,32 @@ public class MainUi {
 
     public MainUi(DataStore dataStore) {
         this.dataStore = dataStore;
-        outlineView = Observable.combineLatest(dataStore.getOutline(), history.getCurrent(),
-                new Func2<Outline, OutlineNodeId, OutlineView>() {
+        outlineView = Observable.combineLatest(dataStore.getOutline(), pathHistory.getCurrent(),
+                new Func2<Outline, PathHistory.HistoryFrame<OutlineNodeId>, OutlineView>() {
                     @Override
-                    public OutlineView call(Outline outline, OutlineNodeId focus) {
-                        return new OutlineView(outline, focus);
+                    public OutlineView call(Outline outline, PathHistory.HistoryFrame<OutlineNodeId> history) {
+                        return new OutlineView(outline, history.getCurrent());
                     }
                 });
         title = Observable.concat(Observable.<String>just(null),
-                Observable.combineLatest(dataStore.getOutline(), history.getCurrent(), new Func2<Outline, OutlineNodeId, String>() {
-                    @Override
-                    public String call(Outline outline, OutlineNodeId node) {
-                        if (node.isRootNode()) {
-                            return null;
-                        } else {
-                            return outline.getNode(node).getText();
-                        }
-                    }
-                }));
+                Observable.combineLatest(dataStore.getOutline(), pathHistory.getCurrent(),
+                        new Func2<Outline, PathHistory.HistoryFrame<OutlineNodeId>, String>() {
+                            @Override
+                            public String call(Outline outline, PathHistory.HistoryFrame<OutlineNodeId> history) {
+                                OutlineNodeId node = history.getCurrent();
+                                if (node.isRootNode()) {
+                                    return null;
+                                } else {
+                                    return outline.getNode(node).getText();
+                                }
+                            }
+                        }));
 
         Observable<Outline> initialFocus = dataStore.getOutline().first();
         initialFocus.subscribe(new Action1<Outline>() {
             @Override
             public void call(Outline outline) {
-                history.push(outline.getRoot());
+                pathHistory.push(outline.getRoot());
             }
         });
     }
@@ -54,7 +57,12 @@ public class MainUi {
     }
 
     public Observable<OutlineNodeId> getCurrent() {
-        return history.getCurrent();
+        return pathHistory.getCurrent().map(new Func1<PathHistory.HistoryFrame<OutlineNodeId>, OutlineNodeId>() {
+            @Override
+            public OutlineNodeId call(PathHistory.HistoryFrame<OutlineNodeId> history) {
+                return history.getCurrent();
+            }
+        });
     }
 
     public Observable<OutlineView> getOutlineView() {
@@ -62,15 +70,20 @@ public class MainUi {
     }
 
     public void enter(OutlineNodeId node) {
-        history.push(node);
+        pathHistory.push(node);
     }
 
     public void back() {
-        history.pop();
+        pathHistory.pop();
     }
 
     public Observable<OutlineNodeId> getCurrentParent() {
-        return history.getParent();
+        return pathHistory.getCurrent().map(new Func1<PathHistory.HistoryFrame<OutlineNodeId>, OutlineNodeId>() {
+            @Override
+            public OutlineNodeId call(PathHistory.HistoryFrame<OutlineNodeId> history) {
+                return history.getParent();
+            }
+        });
     }
 
     public AppAction importAction(String filename) {

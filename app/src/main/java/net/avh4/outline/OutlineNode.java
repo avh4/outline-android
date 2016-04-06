@@ -57,10 +57,6 @@ public class OutlineNode {
         return new OutlineNode(id, text, children, false);
     }
 
-    boolean isRootNode() {
-        return id.isRootNode();
-    }
-
     public boolean isCompleted() {
         return isCompleted;
     }

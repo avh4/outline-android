@@ -8,44 +8,38 @@ import rx.Observer;
 
 import static org.mockito.Mockito.*;
 
-public class HistoryTest {
+public class PathHistoryTest {
 
-    private History<String> subject;
+    private PathHistory<String> subject;
     @Mock
-    private Observer<String> currentObserver;
-    @Mock
-    private Observer<String> parentObserver;
+    private Observer<PathHistory.HistoryFrame<String>> currentObserver;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        subject = new History<>();
+        subject = new PathHistory<>();
 
         subject.getCurrent().subscribe(currentObserver);
-        subject.getParent().subscribe(parentObserver);
     }
 
     @Test
     public void initialState() throws Exception {
         verifyZeroInteractions(currentObserver);
-        verifyZeroInteractions(parentObserver);
     }
 
     @Test
     public void firstPush() {
         subject.push("AAA");
 
-        verify(currentObserver).onNext("AAA");
-        verify(parentObserver).onNext(null);
+        verify(currentObserver).onNext(new PathHistory.HistoryFrame<>(null, "AAA"));
     }
 
     @Test
     public void secondPush() {
         subject.push("AAA");
-        reset(currentObserver, parentObserver);
+        reset(currentObserver);
         subject.push("BBB");
 
-        verify(currentObserver).onNext("BBB");
-        verify(parentObserver).onNext("AAA");
+        verify(currentObserver).onNext(new PathHistory.HistoryFrame<>("AAA", "BBB"));
     }
 }
