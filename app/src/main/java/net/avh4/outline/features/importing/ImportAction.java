@@ -31,7 +31,7 @@ public class ImportAction implements AppAction {
             @Override
             public void call(final Outline outline) {
                 final OutlineNodeId importRoot = idGenerator.next();
-                final Add addImportRoot = new Add(outline.getRoot().getId(), importRoot, "Import from CSV");
+                final Add addImportRoot = new Add(outline.getRoot(), importRoot, "Import from CSV");
 
                 try {
                     Reader reader = filesystem.read(filename);

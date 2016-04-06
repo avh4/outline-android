@@ -44,7 +44,7 @@ public class MainUi {
         initialFocus.subscribe(new Action1<Outline>() {
             @Override
             public void call(Outline outline) {
-                history.push(outline.getRoot().getId());
+                history.push(outline.getRoot());
             }
         });
     }

@@ -31,7 +31,7 @@ public class FeatureTestPerson {
     public void assertHasItem(String... itemNamePath) {
         Outline outline = app.inspectOutline();
 
-        OutlineNode current = outline.getRoot();
+        OutlineNode current = outline.getNode(outline.getRoot());
         for (String itemName : itemNamePath) {
             current = findChild(outline, current, itemName);
             if (current == null) {

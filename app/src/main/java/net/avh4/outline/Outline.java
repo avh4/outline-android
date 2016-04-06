@@ -40,8 +40,8 @@ public class Outline {
     }
 
     @NonNull
-    public OutlineNode getRoot() {
-        return nodes.get(root);
+    public OutlineNodeId getRoot() {
+        return root;
     }
 
     @NonNull

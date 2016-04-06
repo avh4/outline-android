@@ -49,7 +49,7 @@ public class TestApp {
     }
 
     public void addItem(String text) {
-        mainUi.addAction(inspectOutline().getRoot().getId(), text).run(errorHandler);
+        mainUi.addAction(inspectOutline().getRoot(), text).run(errorHandler);
     }
 
     public void completeItem(String text) {
