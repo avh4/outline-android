@@ -98,6 +98,7 @@ class OutlineAdapter extends BaseAdapter {
                 text2.setVisibility(View.GONE);
                 text2.setText("");
                 checkBox.setVisibility(View.VISIBLE);
+                checkBox.setOnCheckedChangeListener(null);
                 checkBox.setChecked(item.isCompleted());
                 checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
