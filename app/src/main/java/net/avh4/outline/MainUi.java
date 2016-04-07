@@ -66,8 +66,8 @@ public class MainUi {
         pathHistory.push(node);
     }
 
-    public void back() {
-        pathHistory.pop();
+    public boolean back() {
+        return pathHistory.pop();
     }
 
     AppAction importAction(String filename) {

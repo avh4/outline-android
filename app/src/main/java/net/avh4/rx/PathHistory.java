@@ -16,12 +16,15 @@ public class PathHistory<T> {
         output.onNext(new HistoryFrame<>(parent, next));
     }
 
-    public void pop() {
+    public boolean pop() {
+        if (stack.size() <= 1) return false;
+
         stack = stack.minus(0);
         T current = stack.get(0);
         T parent = stack.get(1);
 
         output.onNext(new HistoryFrame<>(parent, current));
+        return true;
     }
 
     public Observable<HistoryFrame<T>> getCurrent() {
