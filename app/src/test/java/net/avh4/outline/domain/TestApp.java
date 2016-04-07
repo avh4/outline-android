@@ -2,6 +2,8 @@ package net.avh4.outline.domain;
 
 import net.avh4.outline.*;
 import net.avh4.outline.features.importing.ImportAction;
+import net.avh4.outline.ui.AddDialogUi;
+import rx.functions.Action1;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,8 +50,13 @@ public class TestApp {
         return mainUi.getOutlineView().toBlocking().first();
     }
 
-    public void addItem(String text) {
-        mainUi.addAction(inspectOutline().getRoot(), text).run(errorHandler);
+    public void addItem(final String text) {
+        mainUi.showAddDialog().subscribe(new Action1<AddDialogUi>() {
+            @Override
+            public void call(AddDialogUi addDialogUi) {
+                addDialogUi.submit(text);
+            }
+        });
     }
 
     public void completeItem(String text) {
@@ -72,5 +79,14 @@ public class TestApp {
 
         assertThat(seen).contains(itemName);
         return null;
+    }
+
+    public void enter(String itemName) {
+        OutlineNode node = assertSeesItem(itemName);
+        mainUi.enter(node.getId());
+    }
+
+    public void goUp() {
+        mainUi.back();
     }
 }

@@ -32,4 +32,26 @@ public class OutlineSteps {
         OutlineNode outlineNode = aaron.app.assertSeesItem("Walk the dog");
         assertThat(outlineNode.isCompleted()).isTrue();
     }
+
+    @Given("^Aaron has an outline$")
+    public void aaron_has_an_outline() throws Throwable {
+        assertThat(aaron.app.inspectOutline()).isNotNull();
+    }
+
+    @When("^Aaron adds some items$")
+    public void aaron_adds_some_items() throws Throwable {
+        aaron.app.addItem("Chores");
+        aaron.app.enter("Chores");
+        aaron.app.addItem("Walk the dog");
+        aaron.app.addItem("Buy milk");
+        aaron.app.goUp();
+    }
+
+    @Then("^he sees those items in the outline$")
+    public void he_sees_those_items_in_the_outline() throws Throwable {
+        aaron.app.assertSeesItem("Chores");
+        aaron.app.enter("Chores");
+        aaron.app.assertSeesItem("Walk the dog");
+        aaron.app.assertSeesItem("Buy milk");
+    }
 }

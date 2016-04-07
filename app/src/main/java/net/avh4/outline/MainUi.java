@@ -4,9 +4,12 @@ import net.avh4.outline.android.AndroidFilesystem;
 import net.avh4.outline.events.CompleteItem;
 import net.avh4.outline.events.UncompleteItem;
 import net.avh4.outline.features.importing.ImportAction;
+import net.avh4.outline.ui.AddDialogUi;
 import net.avh4.rx.PathHistory;
 import rx.Observable;
+import rx.Single;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.functions.Func2;
 
 import java.util.UUID;
@@ -59,26 +62,16 @@ public class MainUi {
         return outlineView;
     }
 
-    void enter(OutlineNodeId node) {
+    public void enter(OutlineNodeId node) {
         pathHistory.push(node);
     }
 
-    void back() {
+    public void back() {
         pathHistory.pop();
     }
 
     AppAction importAction(String filename) {
         return new ImportAction(dataStore, idGenerator, filesystem, filename);
-    }
-
-    public AppAction addAction(final OutlineNodeId parent, final String text) {
-        return new AppAction() {
-            @Override
-            public void run(OnError e) {
-                OutlineNodeId itemId = idGenerator.next();
-                dataStore.addItem(parent, itemId, text);
-            }
-        };
     }
 
     public AppAction completeAction(final OutlineNodeId itemId) {
@@ -97,5 +90,15 @@ public class MainUi {
                 dataStore.processEvent(new UncompleteItem(itemId));
             }
         };
+    }
+
+    public Single<AddDialogUi> showAddDialog() {
+        return pathHistory.getCurrent().first().map(new Func1<PathHistory.HistoryFrame<OutlineNodeId>, AddDialogUi>() {
+            @Override
+            public AddDialogUi call(PathHistory.HistoryFrame<OutlineNodeId> outlineNodeIdHistoryFrame) {
+                OutlineNodeId addTo = outlineNodeIdHistoryFrame.getCurrent();
+                return new AddDialogUi(dataStore, addTo, idGenerator);
+            }
+        }).toSingle();
     }
 }

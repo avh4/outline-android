@@ -22,6 +22,7 @@ import com.nononsenseapps.filepicker.FilePickerActivity;
 import net.avh4.android.OnItemCheckedChangedListener;
 import net.avh4.android.ThrowableDialog;
 import net.avh4.outline.events.Move;
+import net.avh4.outline.ui.AddDialogUi;
 import net.avh4.outline.ui.actions.NotImplementedAction;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
@@ -118,13 +119,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ui.getOutlineView().first().subscribe(new Action1<OutlineView>() {
-                    @Override
-                    public void call(OutlineView outlineView) {
-                        OutlineNode parent = outlineView.getParent();
-                        showAddDialog(parent.getId());
-                    }
-                });
+                showAddDialog();
             }
         });
 
@@ -249,18 +244,23 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showAddDialog(final OutlineNodeId parent) {
-        new MaterialDialog.Builder(MainActivity.this)
-                .inputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
-                .input(null, null, new MaterialDialog.InputCallback() {
-                    @Override
-                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                        ui.addAction(parent, input.toString()).run(errorHandler);
-                    }
-                })
-                .canceledOnTouchOutside(false)
-                .negativeText(android.R.string.cancel)
-                .show();
+    private void showAddDialog() {
+        ui.showAddDialog().subscribe(new Action1<AddDialogUi>() {
+            @Override
+            public void call(final AddDialogUi addDialogUi) {
+                new MaterialDialog.Builder(MainActivity.this)
+                        .inputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES)
+                        .input(null, null, new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                                addDialogUi.submit(input.toString());
+                            }
+                        })
+                        .canceledOnTouchOutside(false)
+                        .negativeText(android.R.string.cancel)
+                        .show();
+            }
+        });
     }
 
     @Override

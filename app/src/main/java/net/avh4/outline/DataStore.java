@@ -46,7 +46,7 @@ public class DataStore {
         outlineSubject.onNext(outline);
     }
 
-    void addItem(OutlineNodeId parent, OutlineNodeId itemId, String text) {
+    public void addItem(OutlineNodeId parent, OutlineNodeId itemId, String text) {
         Event<Outline> e = new Add(parent, itemId, text);
         processEvent(e);
     }
