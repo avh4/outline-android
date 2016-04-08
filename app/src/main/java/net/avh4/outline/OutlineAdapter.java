@@ -1,12 +1,12 @@
 package net.avh4.outline;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Paint;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -15,10 +15,12 @@ import net.avh4.android.ThrowableDialog;
 import rx.Observable;
 import rx.functions.Action1;
 
-class OutlineAdapter extends BaseAdapter {
+class OutlineAdapter extends RecyclerView.Adapter {
     private final Context context;
     private OutlineView current;
     private OnItemCheckedChangedListener onItemCheckedChangedListener;
+    private AdapterView.OnItemClickListener onItemClickListener;
+    private AdapterView.OnItemLongClickListener onItemLongClickListener;
 
     OutlineAdapter(final Context context, Observable<OutlineView> outlineView) {
         this.context = context;
@@ -46,12 +48,24 @@ class OutlineAdapter extends BaseAdapter {
         textView.setPaintFlags(flags);
     }
 
+    public void setOnItemLongClickListener(AdapterView.OnItemLongClickListener onItemLongClickListener) {
+        this.onItemLongClickListener = onItemLongClickListener;
+    }
+
+    public void setOnItemClickListener(AdapterView.OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+    }
+
     void setOnItemCheckedChangedListener(OnItemCheckedChangedListener onItemCheckedChangedListener) {
         this.onItemCheckedChangedListener = onItemCheckedChangedListener;
     }
 
+    public OutlineNode getItem(int position) {
+        return current.getChild(position);
+    }
+
     @Override
-    public int getCount() {
+    public int getItemCount() {
         if (current == null) {
             return 0;
         } else {
@@ -60,26 +74,21 @@ class OutlineAdapter extends BaseAdapter {
     }
 
     @Override
-    public OutlineNode getItem(int position) {
-        return current.getChild(position);
-    }
-
-    @Override
     public long getItemId(int position) {
         return 0;
     }
 
-    @SuppressLint("InflateParams")
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
-        View view = convertView;
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        LayoutInflater vi = LayoutInflater.from(context);
+        View view = vi.inflate(R.layout.list_item_outline, parent, false);
+        return new RecyclerView.ViewHolder(view) {
+        };
+    }
 
-        if (view == null) {
-            LayoutInflater vi;
-            vi = LayoutInflater.from(context);
-            view = vi.inflate(R.layout.list_item_outline, null);
-        }
-
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
+        View view = holder.itemView;
         OutlineNode item = getItem(position);
         if (item != null) {
             TextView text1 = (TextView) view.findViewById(android.R.id.text1);
@@ -107,7 +116,20 @@ class OutlineAdapter extends BaseAdapter {
                     }
                 });
             }
+
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onItemClickListener.onItemClick(null, v, position, getItemId(position));
+                }
+            });
+
+            view.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    return onItemLongClickListener.onItemLongClick(null, v, position, getItemId(position));
+                }
+            });
         }
-        return view;
     }
 }
