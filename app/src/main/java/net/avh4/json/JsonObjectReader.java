@@ -29,6 +29,11 @@ public class JsonObjectReader {
         return valueContext.getString();
     }
 
+    public long getLong(String fieldName) throws IOException {
+        checkField(fieldName);
+        return valueContext.getLong();
+    }
+
     public <T> T getValue(String fieldName, FromJsonValue<T> fromJsonValue) throws IOException {
         checkField(fieldName);
         return valueContext.getValue(fromJsonValue);

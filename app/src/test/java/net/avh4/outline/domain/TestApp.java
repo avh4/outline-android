@@ -1,12 +1,13 @@
 package net.avh4.outline.domain;
 
+import net.avh4.observables.test.Capture;
 import net.avh4.outline.*;
 import net.avh4.outline.features.importing.ImportAction;
 import net.avh4.outline.ui.AddDialogUi;
+import net.avh4.time.Time;
 import rx.functions.Action1;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
@@ -16,8 +17,9 @@ public class TestApp {
     private static final AtomicInteger appId = new AtomicInteger();
     private final EventStore eventStore = mock(EventStore.class);
     private final DataStore dataStore = new DataStore(eventStore);
-    private final MainUi mainUi = new MainUi(dataStore);
+    private final MainUi mainUi;
     private final Filesystem filesystem;
+    private final Capture<OutlineView> outlineView = new Capture<>();
     private Generator<OutlineNodeId> idGenerator;
     private AppAction.OnError errorHandler = new AppAction.OnError() {
         @Override
@@ -26,10 +28,13 @@ public class TestApp {
         }
     };
 
-    public TestApp(Filesystem filesystem) {
+    public TestApp(Filesystem filesystem, Time time) {
         this.filesystem = filesystem;
         String deviceId = "TestApp-" + appId.incrementAndGet();
         idGenerator = new IdGenerator(deviceId);
+        mainUi = new MainUi(dataStore, time);
+
+        mainUi.getOutlineView().subscribe(outlineView);
 
         try {
             dataStore.initialize();
@@ -39,7 +44,7 @@ public class TestApp {
     }
 
     public Outline inspectOutline() {
-        return dataStore.getOutline().toBlocking().first();
+        return outlineView.getValue().getOutline();
     }
 
     public void importFile(String filename) {
@@ -47,7 +52,7 @@ public class TestApp {
     }
 
     public OutlineView inspectOutlineView() {
-        return mainUi.getOutlineView().toBlocking().first();
+        return outlineView.getValue();
     }
 
     public void addItem(final String text) {
@@ -65,20 +70,9 @@ public class TestApp {
     }
 
     public OutlineNode assertSeesItem(String itemName) {
-        OutlineView outlineView = inspectOutlineView();
-        ArrayList<String> seen = new ArrayList<>();
-
-        for (int i = 0; i < outlineView.getNumberOfChildren(); i++) {
-            OutlineNode child = outlineView.getChild(i);
-            String childText = child.getText();
-            seen.add(childText);
-            if (childText.equals(itemName)) {
-                return child;
-            }
-        }
-
-        assertThat(seen).contains(itemName);
-        return null;
+        OutlineNode item = seeItem(itemName);
+        assertThat(item).isNotNull();
+        return item;
     }
 
     public void enter(String itemName) {
@@ -88,5 +82,19 @@ public class TestApp {
 
     public void goUp() {
         mainUi.back();
+    }
+
+    public OutlineNode seeItem(String itemName) {
+        OutlineView outlineView = inspectOutlineView();
+
+        for (int i = 0; i < outlineView.getNumberOfChildren(); i++) {
+            OutlineNode child = outlineView.getChild(i);
+            String childText = child.getText();
+            if (childText.equals(itemName)) {
+                return child;
+            }
+        }
+
+        return null;
     }
 }

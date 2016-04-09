@@ -13,6 +13,7 @@ import net.avh4.json.FromJsonValue;
 import net.avh4.json.JsonObjectReader;
 import net.avh4.json.JsonValueReader;
 import net.avh4.outline.events.*;
+import net.avh4.outline.events.legacy.LegacyCompleteItem1;
 import org.pcollections.HashPMap;
 import org.pcollections.HashTreePMap;
 import rx.functions.Action1;
@@ -86,6 +87,7 @@ public class EventStore {
                                 .plus("net.avh4.outline.DataStore.Delete", Delete.fromJson)
                                 .plus("net.avh4.outline.Delete", Delete.fromJson)
                                 .plus(Delete.eventType, Delete.fromJson)
+                                .plus(LegacyCompleteItem1.eventType, LegacyCompleteItem1.fromJson)
                                 .plus(CompleteItem.eventType, CompleteItem.fromJson)
                                 .plus(UncompleteItem.eventType, UncompleteItem.fromJson)
                                 .plus(Move.eventType, Move.fromJson);

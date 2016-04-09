@@ -6,11 +6,13 @@ import net.avh4.outline.events.UncompleteItem;
 import net.avh4.outline.features.importing.ImportAction;
 import net.avh4.outline.ui.AddDialogUi;
 import net.avh4.rx.PathHistory;
+import net.avh4.time.Time;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
+import rx.functions.Func3;
 
 import java.util.UUID;
 
@@ -21,14 +23,17 @@ public class MainUi {
     private final Filesystem filesystem = new AndroidFilesystem();
     private final Observable<OutlineView> outlineView;
     private final Observable<String> title;
+    private final Time time;
 
-    public MainUi(DataStore dataStore) {
+    public MainUi(DataStore dataStore, Time time) {
         this.dataStore = dataStore;
-        outlineView = Observable.combineLatest(dataStore.getOutline(), pathHistory.getCurrent(),
-                new Func2<Outline, PathHistory.HistoryFrame<OutlineNodeId>, OutlineView>() {
+        this.time = time;
+
+        outlineView = Observable.combineLatest(dataStore.getOutline(), pathHistory.getCurrent(), time.everyMinute(),
+                new Func3<Outline, PathHistory.HistoryFrame<OutlineNodeId>, Long, OutlineView>() {
                     @Override
-                    public OutlineView call(Outline outline, PathHistory.HistoryFrame<OutlineNodeId> history) {
-                        return new OutlineView(outline, history.getCurrent(), history.getParent());
+                    public OutlineView call(Outline outline, PathHistory.HistoryFrame<OutlineNodeId> history, Long nowMillis) {
+                        return new OutlineView(outline, history.getCurrent(), history.getParent(), nowMillis);
                     }
                 });
         title = Observable.concat(Observable.<String>just(null),
@@ -78,7 +83,7 @@ public class MainUi {
         return new AppAction() {
             @Override
             public void run(OnError e) {
-                dataStore.processEvent(new CompleteItem(itemId));
+                dataStore.processEvent(new CompleteItem(itemId, time.nowMillis()));
             }
         };
     }

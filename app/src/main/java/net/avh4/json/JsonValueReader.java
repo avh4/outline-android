@@ -32,6 +32,13 @@ public class JsonValueReader {
         return parser.getIntValue();
     }
 
+    public long getLong() throws IOException {
+        if (parser.nextToken() != JsonToken.VALUE_NUMBER_INT) {
+            throwException("long value", parser);
+        }
+        return parser.getLongValue();
+    }
+
     <T> T getValue(FromJsonValue<T> fromJsonValue) throws IOException {
         return fromJsonValue.call(this);
     }

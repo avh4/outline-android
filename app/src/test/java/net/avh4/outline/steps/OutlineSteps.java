@@ -5,16 +5,21 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import cucumber.runtime.java.StepDefAnnotation;
 import net.avh4.outline.OutlineNode;
+import net.avh4.outline.domain.FakeTime;
 import net.avh4.outline.domain.FeatureTestPerson;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
 @StepDefAnnotation
 public class OutlineSteps {
     private final FeatureTestPerson aaron;
+    private final FakeTime time;
 
-    public OutlineSteps(FeatureTestPerson aaron) {
+    public OutlineSteps(FeatureTestPerson aaron, FakeTime time) {
         this.aaron = aaron;
+        this.time = time;
     }
 
     @Given("^Aaron has an item to do$")
@@ -53,5 +58,21 @@ public class OutlineSteps {
         aaron.app.enter("Chores");
         aaron.app.assertSeesItem("Walk the dog");
         aaron.app.assertSeesItem("Buy milk");
+    }
+
+    @Given("^Aaron completes an item$")
+    public void aaron_completes_an_item() throws Throwable {
+        aaron.app.addItem("Feed the cat");
+        aaron.app.completeItem("Feed the cat");
+    }
+
+    @When("^one day passes$")
+    public void one_day_passes() throws Throwable {
+        time.advance(1, TimeUnit.DAYS);
+    }
+
+    @Then("^he no longer sees the completed item$")
+    public void he_no_longer_sees_the_completed_item() throws Throwable {
+        assertThat(aaron.app.seeItem("Feed the cat")).isNull();
     }
 }

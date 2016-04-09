@@ -25,6 +25,8 @@ import net.avh4.android.ThrowableDialog;
 import net.avh4.outline.events.Move;
 import net.avh4.outline.ui.AddDialogUi;
 import net.avh4.outline.ui.actions.NotImplementedAction;
+import net.avh4.time.AndroidTime;
+import net.avh4.time.Time;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 import rx.functions.Action1;
@@ -52,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
 
         EventStore eventStore = new EventStore(getApplicationContext());
         dataStore = new DataStore(eventStore);
-        ui = new MainUi(dataStore);
+        Time time = new AndroidTime();
+        ui = new MainUi(dataStore, time);
         menuActions = HashTreePMap.<Integer, AppAction>empty()
                 .plus(R.id.action_import,
                         new AppAction() {

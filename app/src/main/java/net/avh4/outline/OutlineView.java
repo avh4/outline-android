@@ -1,6 +1,7 @@
 package net.avh4.outline;
 
 import org.pcollections.PVector;
+import org.pcollections.TreePVector;
 
 public class OutlineView {
     private final Outline outline;
@@ -8,11 +9,22 @@ public class OutlineView {
     private final OutlineNode current;
     private final PVector<OutlineNodeId> children;
 
-    OutlineView(Outline outline, OutlineNodeId current, OutlineNodeId parent) {
+    OutlineView(Outline outline, OutlineNodeId current, OutlineNodeId parent, long nowMillis) {
         this.outline = outline;
         this.parent = parent == null ? null : outline.getNode(parent);
         this.current = outline.getNode(current);
-        children = this.current.getChildren();
+        children = getVisibleChildren(nowMillis, this.current.getChildren());
+    }
+
+    private PVector<OutlineNodeId> getVisibleChildren(long nowMillis, PVector<OutlineNodeId> children) {
+        PVector<OutlineNodeId> visibleChildren = TreePVector.empty();
+        for (OutlineNodeId childId : children) {
+            OutlineNode child = outline.getNode(childId);
+            if (child.isVisible(nowMillis)) {
+                visibleChildren = visibleChildren.plus(childId);
+            }
+        }
+        return visibleChildren;
     }
 
     public int getNumberOfChildren() {

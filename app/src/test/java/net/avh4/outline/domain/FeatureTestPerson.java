@@ -9,8 +9,12 @@ import java.util.Arrays;
 
 
 public class FeatureTestPerson {
+    public final TestApp app;
     private final FakeFilesystem filesystem = new FakeFilesystem();
-    public final TestApp app = new TestApp(filesystem);
+
+    public FeatureTestPerson(FakeTime time) {
+        app = new TestApp(filesystem, time);
+    }
 
     private static OutlineNode findChild(Outline outline, OutlineNode parent, String itemName) {
         for (OutlineNodeId childId : parent.getChildren()) {
