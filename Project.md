@@ -8,6 +8,7 @@
 
 ## Finished
 
+  - 2016-04-09 I don't see completed items after a day
   - 2016-04-04 I can move an item into an existing child
   - 2016-04-04 I can move items up a level
   - 2016-04-03 I can see how many children in an item
