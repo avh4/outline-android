@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.io.SerializedString;
 
 import java.io.IOException;
+import java.util.List;
 
 public class JsonObjectReader {
     private final JsonParser parser;
@@ -37,5 +38,10 @@ public class JsonObjectReader {
     public <T> T getValue(String fieldName, FromJsonValue<T> fromJsonValue) throws IOException {
         checkField(fieldName);
         return valueContext.getValue(fromJsonValue);
+    }
+
+    public <T> List<T> getArray(String fieldName, FromJsonValue<T> fromJsonValue) throws IOException {
+        checkField(fieldName);
+        return valueContext.getArray(fromJsonValue);
     }
 }

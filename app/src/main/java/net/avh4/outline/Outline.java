@@ -1,8 +1,7 @@
 package net.avh4.outline;
 
 import android.support.annotation.NonNull;
-import org.pcollections.HashTreePMap;
-import org.pcollections.PMap;
+import org.pcollections.*;
 import rx.functions.Func1;
 
 import java.util.Map;
@@ -68,5 +67,10 @@ public class Outline {
                 .plus(from, newFrom)
                 .plus(to, newTo);
         return new Outline(root, newNodes);
+    }
+
+    public Outline reorder(OutlineNodeId parentId, PVector<OutlineNodeId> newOrder) {
+        OutlineNode parent = getNode(parentId);
+        return new Outline(root, nodes.plus(parentId, parent.reorderChildren(newOrder)));
     }
 }

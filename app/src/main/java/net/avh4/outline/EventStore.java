@@ -90,7 +90,8 @@ public class EventStore {
                                 .plus(LegacyCompleteItem1.eventType, LegacyCompleteItem1.fromJson)
                                 .plus(CompleteItem.eventType, CompleteItem.fromJson)
                                 .plus(UncompleteItem.eventType, UncompleteItem.fromJson)
-                                .plus(Move.eventType, Move.fromJson);
+                                .plus(Move.eventType, Move.fromJson)
+                                .plus(Reorder.eventType, Reorder.fromJson);
 
                 FromJsonValue<? extends Event<Outline>> fromJson = typeMap.get(type);
                 if (fromJson == null) {

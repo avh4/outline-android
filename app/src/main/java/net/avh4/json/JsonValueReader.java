@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JsonValueReader {
     private final JsonParser parser;
@@ -41,6 +43,25 @@ public class JsonValueReader {
 
     <T> T getValue(FromJsonValue<T> fromJsonValue) throws IOException {
         return fromJsonValue.call(this);
+    }
+
+    public <T> List<T> getArray(FromJsonValue<T> fromJsonValue) throws IOException {
+        if (parser.nextToken() != JsonToken.START_ARRAY) {
+            throwException("JSON array", parser);
+        }
+
+        ArrayList<T> result = new ArrayList<>();
+
+        while (true) {
+            try {
+                T value = fromJsonValue.call(this);
+                result.add(value);
+            } catch (IOException e) {
+                if (parser.getCurrentToken() == JsonToken.END_ARRAY) {
+                    return result;
+                }
+            }
+        }
     }
 
     public <T> T getObject(FromJsonObject<T> fromJsonObject) throws IOException {
