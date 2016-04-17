@@ -20,6 +20,8 @@ import rx.functions.Action1;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 
 public class EventStore {
@@ -60,6 +62,12 @@ public class EventStore {
     void iterate(Action1<Event<Outline>> process) throws IOException {
         File[] files = eventStoreRoot.listFiles();
         long lastSeq = Long.MIN_VALUE;
+        Arrays.sort(files, new Comparator<File>() {
+            @Override
+            public int compare(File lhs, File rhs) {
+                return lhs.getName().compareTo(rhs.getName());
+            }
+        });
         for (File file : files) {
             try {
                 long seq = Long.parseLong(file.getName().replace(".json", ""));
