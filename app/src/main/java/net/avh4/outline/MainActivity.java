@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.nononsenseapps.filepicker.FilePickerActivity;
+import io.doorbell.android.Doorbell;
 import net.avh4.android.OnItemCheckedChangedListener;
 import net.avh4.android.ThrowableDialog;
 import net.avh4.outline.events.Move;
@@ -67,6 +68,15 @@ public class MainActivity extends AppCompatActivity {
                                 i.putExtra(FilePickerActivity.EXTRA_START_PATH, Environment.getExternalStorageDirectory().getPath());
 
                                 startActivityForResult(i, RESULT_CODE_FILE);
+                            }
+                        })
+                .plus(R.id.action_feedback,
+                        new AppAction() {
+                            @Override
+                            public void run(OnError e) {
+                                new Doorbell(MainActivity.this, 3572, OutlineApplication.credentials.doorbellPrivateKey)
+                                        .setEmailHint(getString(R.string.feedback_your_email_optional))
+                                        .show();
                             }
                         });
 

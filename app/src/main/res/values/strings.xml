@@ -11,4 +11,6 @@
     <string name="item_child_count">%1$d</string>
     <string name="action_item_move_up">Move up to %1$s</string>
     <string name="action_item_move_into">Move into…</string>
+    <string name="action_give_feedback">Leave Feedback</string>
+    <string name="feedback_your_email_optional">Your email address (optional)</string>
 </resources>
