@@ -23,17 +23,23 @@ import java.io.IOException;
 import java.util.Date;
 
 public class EventStore {
-    private final Context context;
     private final JsonFactory jsonFactory = new JsonFactory();
     private final UniqueClock uniqueClock = new UniqueClock();
+    private File eventStoreRoot;
 
     EventStore(Context context) {
-        this.context = context;
+        eventStoreRoot = new File(context.getFilesDir(), "eventStore");
+        if (!eventStoreRoot.exists()) {
+            boolean result = eventStoreRoot.mkdir();
+            if (!result) {
+                throw new RuntimeException("Unable to initialize data directory: " + eventStoreRoot.getAbsolutePath());
+            }
+        }
     }
 
     void record(Event e) {
         String filename = Long.toString(uniqueClock.get());
-        File file = new File(context.getFilesDir(), filename + ".json");
+        File file = new File(eventStoreRoot, filename + ".json");
         if (file.exists()) {
             throw new RuntimeException("event already exists!! " + file);
         }
@@ -52,7 +58,7 @@ public class EventStore {
     }
 
     void iterate(Action1<Event<Outline>> process) throws IOException {
-        File[] files = context.getFilesDir().listFiles();
+        File[] files = eventStoreRoot.listFiles();
         long lastSeq = Long.MIN_VALUE;
         for (File file : files) {
             try {
