@@ -24,7 +24,6 @@ import net.avh4.android.OnItemCheckedChangedListener;
 import net.avh4.android.ThrowableDialog;
 import net.avh4.outline.events.Move;
 import net.avh4.outline.ui.AddDialogUi;
-import net.avh4.outline.ui.actions.NotImplementedAction;
 import net.avh4.time.AndroidTime;
 import net.avh4.time.Time;
 import org.pcollections.HashTreePMap;
@@ -69,8 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 startActivityForResult(i, RESULT_CODE_FILE);
                             }
-                        })
-                .plus(R.id.action_settings, new NotImplementedAction(this));
+                        });
 
         final MaterialDialog loadingDialog = new MaterialDialog.Builder(this)
                 .content(R.string.dialog_loading_initial)
