@@ -77,7 +77,7 @@ public class EventStore {
                 lastSeq = seq;
                 Event<Outline> event = parseFile(file);
                 process.call(event);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new IOException("Error parsing " + file.getAbsolutePath(), e);
             }
         }

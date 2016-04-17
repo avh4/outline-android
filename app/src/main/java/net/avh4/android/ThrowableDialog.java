@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.TextView;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.crashlytics.android.Crashlytics;
 import net.avh4.Throwable;
 import net.avh4.outline.R;
 
@@ -14,6 +15,7 @@ public class ThrowableDialog {
         textView.setHorizontallyScrolling(true);
         textView.setText(stackTrace);
         Log.e("ThrowableDialog", "Unexpected error", error);
+        Crashlytics.logException(error);
         return new MaterialDialog.Builder(context)
                 .title(R.string.dialog_error_title)
                 .cancelable(false)
