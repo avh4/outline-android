@@ -8,6 +8,15 @@
 
 ## Finished
 
+### 0.0.3-alpha
+
+
+### 0.0.2-alpha
+
+ - 2016-04-16 Added the ability to leave feedback about the app
+
+### 0.0.1-alpha
+
   - 2016-04-09 I don't see completed items after a day
   - 2016-04-04 I can move an item into an existing child
   - 2016-04-04 I can move items up a level
