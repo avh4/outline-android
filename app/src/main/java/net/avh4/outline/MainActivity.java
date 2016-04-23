@@ -238,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
                     toolbar.setNavigationIcon(null);
                 } else {
                     toolbar.setNavigationIcon(android.support.v7.appcompat.R.drawable.abc_ic_ab_back_mtrl_am_alpha);
+                    toolbar.setNavigationContentDescription(getString(R.string.action_go_up, parent.getText()));
                 }
             }
         });

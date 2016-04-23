@@ -16,4 +16,6 @@
     <string name="action_reorder">Reorder items</string>
     <string name="action_drag_to_reorder">Drag to reorder</string>
     <string name="action_show_checkboxes">Show checkboxes</string>
+    <string name="action_add_item">Add a new item</string>
+    <string name="action_go_up">Back to %1$s</string>
 </resources>

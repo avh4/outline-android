@@ -9,6 +9,7 @@
 
 ### 0.0.3-alpha
 
+ - 2016-04-22 Added missing accessibility labels
  - 2016-04-22 I can reorder items
  - 2016-04-22 The floating action button no longer obscures the bottom most checkbox
 
