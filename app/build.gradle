@@ -9,8 +9,8 @@ android {
         applicationId "net.avh4.outline"
         minSdkVersion 15
         targetSdkVersion 23
-        versionCode 3
-        versionName "0.0.3-alpha"
+        versionCode 4
+        versionName "0.0.4-alpha-dev"
     }
     buildTypes {
         release {
