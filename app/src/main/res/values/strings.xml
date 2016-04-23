@@ -13,4 +13,7 @@
     <string name="action_item_move_into">Move into…</string>
     <string name="action_give_feedback">Leave Feedback</string>
     <string name="feedback_your_email_optional">Your email address (optional)</string>
+    <string name="action_reorder">Reorder items</string>
+    <string name="action_drag_to_reorder">Drag to reorder</string>
+    <string name="action_show_checkboxes">Show checkboxes</string>
 </resources>

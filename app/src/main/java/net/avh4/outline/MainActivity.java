@@ -13,22 +13,27 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Toast;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import io.doorbell.android.Doorbell;
 import net.avh4.android.OnItemCheckedChangedListener;
 import net.avh4.android.ThrowableDialog;
 import net.avh4.outline.events.Move;
+import net.avh4.outline.events.Reorder;
 import net.avh4.outline.ui.AddDialogUi;
 import net.avh4.time.AndroidTime;
 import net.avh4.time.Time;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
+import org.pcollections.PVector;
+import org.pcollections.TreePVector;
 import rx.functions.Action1;
 
 import java.io.IOException;
@@ -47,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
             ThrowableDialog.show(MainActivity.this, err);
         }
     };
+    private OutlineAdapter adapter;
+    private OutlineAdapter.Mode adapterMode = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +85,26 @@ public class MainActivity extends AppCompatActivity {
                                         .setEmailHint(getString(R.string.feedback_your_email_optional))
                                         .show();
                             }
-                        });
+                        })
+                .plus(R.id.action_reorder,
+                        new AppAction() {
+                            @Override
+                            public void run(OnError e) {
+                                if (adapter != null) {
+                                    adapter.showReorder();
+                                }
+                            }
+                        })
+                .plus(R.id.action_show_checkboxes,
+                        new AppAction() {
+                            @Override
+                            public void run(OnError e) {
+                                if (adapter != null) {
+                                    adapter.showCheckboxes();
+                                }
+                            }
+                        })
+        ;
 
         final MaterialDialog loadingDialog = new MaterialDialog.Builder(this)
                 .content(R.string.dialog_loading_initial)
@@ -137,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
 
         RecyclerView listView = (RecyclerView) findViewById(R.id.list);
         assert listView != null;
-        final OutlineAdapter adapter = new OutlineAdapter(this, ui.getOutlineView());
+        adapter = new OutlineAdapter(this, ui.getOutlineView());
         adapter.setOnItemCheckedChangedListener(new OnItemCheckedChangedListener() {
             @Override
             public void onItemCheckedChanged(int position, boolean isChecked) {
@@ -150,6 +176,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         listView.setAdapter(adapter);
+        final ItemTouchHelper itemTouchHelper = new ItemTouchHelper(adapter.itemTouchHelperCallback);
+        itemTouchHelper.attachToRecyclerView(listView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         listView.setLayoutManager(layoutManager);
         adapter.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -170,6 +198,35 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 return true;
+            }
+        });
+        adapter.setOnStartDragListener(
+                new OnStartDragListener() {
+                    @Override
+                    public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
+                        itemTouchHelper.startDrag(viewHolder);
+                    }
+                });
+        adapter.setOnItemsReorderedListener(new OnItemsReorderedListener() {
+            @Override
+            public void onItemsReordered(OutlineView current, PVector<Integer> newPositionOrder) {
+                OutlineNodeId parent = current.getNode().getId();
+
+                PVector<OutlineNodeId> newOrder = TreePVector.empty();
+                for (Integer position : newPositionOrder) {
+                    newOrder = newOrder.plus(current.getChild(position).getId());
+                }
+                dataStore.processEvent(new Reorder(parent, newOrder));
+            }
+        });
+        adapter.getMode().subscribe(new Action1<OutlineAdapter.Mode>() {
+            @Override
+            public void call(OutlineAdapter.Mode mode) {
+                adapterMode = mode;
+                invalidateOptionsMenu();
+                if (mode == OutlineAdapter.Mode.REORDER) {
+                    Toast.makeText(MainActivity.this, R.string.action_drag_to_reorder, Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -282,6 +339,22 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (adapterMode == OutlineAdapter.Mode.CHECKBOX) {
+            menu.findItem(R.id.action_show_checkboxes).setVisible(false);
+            menu.findItem(R.id.action_reorder).setVisible(true);
+        } else if (adapterMode == OutlineAdapter.Mode.REORDER) {
+            menu.findItem(R.id.action_show_checkboxes).setVisible(true);
+            menu.findItem(R.id.action_reorder).setVisible(false);
+        } else {
+            menu.findItem(R.id.action_show_checkboxes).setVisible(false);
+            menu.findItem(R.id.action_reorder).setVisible(false);
+        }
+
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
