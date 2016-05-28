@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import net.avh4.Action1E;
 import net.avh4.Event;
 import net.avh4.ISO8601;
 import net.avh4.UniqueClock;
@@ -18,72 +19,51 @@ import org.pcollections.HashPMap;
 import org.pcollections.HashTreePMap;
 import rx.functions.Action1;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Date;
 
 public class EventStore {
     private final JsonFactory jsonFactory = new JsonFactory();
     private final UniqueClock uniqueClock = new UniqueClock();
-    private File eventStoreRoot;
+    private RawEventStore rawEventStore;
 
     EventStore(Context context) {
-        eventStoreRoot = new File(context.getFilesDir(), "eventStore");
-        if (!eventStoreRoot.exists()) {
-            boolean result = eventStoreRoot.mkdir();
-            if (!result) {
-                throw new RuntimeException("Unable to initialize data directory: " + eventStoreRoot.getAbsolutePath());
-            }
-        }
+        rawEventStore = new RawEventStore(context);
     }
 
-    void record(Event e) {
+    void record(final Event e) {
         String filename = Long.toString(uniqueClock.get());
-        File file = new File(eventStoreRoot, filename + ".json");
-        if (file.exists()) {
-            throw new RuntimeException("event already exists!! " + file);
-        }
         try {
-            JsonGenerator generator = jsonFactory.createGenerator(file, JsonEncoding.UTF8);
-            generator.writeStartObject();
-            generator.writeStringField("at", ISO8601.format(new Date()));
-            generator.writeStringField("type", e.eventType());
-            generator.writeFieldName("data");
-            e.toJson(generator);
-            generator.writeEndObject();
-            generator.close();
+            rawEventStore.write(filename, new WriterThing() {
+                public void write(OutputStream os) throws IOException {
+                    JsonGenerator generator = jsonFactory.createGenerator(os, JsonEncoding.UTF8);
+                    generator.writeStartObject();
+                    generator.writeStringField("at", ISO8601.format(new Date()));
+                    generator.writeStringField("type", e.eventType());
+                    generator.writeFieldName("data");
+                    e.toJson(generator);
+                    generator.writeEndObject();
+                    generator.close();
+                }
+            });
         } catch (IOException e1) {
             e1.printStackTrace();
         }
     }
 
-    void iterate(Action1<Event<Outline>> process) throws IOException {
-        File[] files = eventStoreRoot.listFiles();
-        long lastSeq = Long.MIN_VALUE;
-        Arrays.sort(files, new Comparator<File>() {
+    void iterate(final Action1<Event<Outline>> process) throws IOException {
+        rawEventStore.iterate(new Action1E<InputStream, IOException>() {
             @Override
-            public int compare(File lhs, File rhs) {
-                return lhs.getName().compareTo(rhs.getName());
+            public void process(InputStream inputStream) throws IOException {
+                Event<Outline> event = parseFile(inputStream);
+                process.call(event);
             }
         });
-        for (File file : files) {
-            try {
-                long seq = Long.parseLong(file.getName().replace(".json", ""));
-                if (lastSeq >= seq) {
-                    throw new IOException("Got files our of order: " + file.getName() + " after " + lastSeq);
-                }
-                lastSeq = seq;
-                Event<Outline> event = parseFile(file);
-                process.call(event);
-            } catch (Exception e) {
-                throw new IOException("Error parsing " + file.getAbsolutePath(), e);
-            }
-        }
     }
 
-    private Event<Outline> parseFile(File file) throws IOException {
+    private Event<Outline> parseFile(InputStream file) throws IOException {
         JsonParser parser = jsonFactory.createParser(file);
         JsonValueReader helper = new JsonValueReader(parser);
 
